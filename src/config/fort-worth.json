@@ -1,0 +1,31 @@
+{
+  "id": "fort-worth",
+  "name": "Fort Worth",
+  "shortName": "FW",
+  "pipeline": {
+    "source": "Explorer",
+    "connections": ["FM1", "FM6"],
+    "defaultDelay": 0
+  },
+  "gradeMap": {
+    "regular": ["4C", "4D", "75"],
+    "premium": ["3C", "3D"]
+  },
+  "products": {
+    "regular": {
+      "label": "Regular",
+      "tanks": [
+        { "id": "TK55", "label": "Tank 55", "safeFill": 50393, "heel": 6458 },
+        { "id": "TK56", "label": "Tank 56", "safeFill": 43974, "heel": 4407 },
+        { "id": "TK03", "label": "Tank 03", "safeFill": 14428, "heel": 1313 }
+      ]
+    },
+    "premium": {
+      "label": "Premium",
+      "tanks": [
+        { "id": "TK04", "label": "Tank 04", "safeFill": 15838, "heel": 1216 },
+        { "id": "TK05", "label": "Tank 05", "safeFill": 13670, "heel": 1369 }
+      ]
+    }
+  }
+}

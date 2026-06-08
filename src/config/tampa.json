@@ -1,0 +1,11 @@
+{
+  "id": "tampa",
+  "name": "Tampa",
+  "shortName": "TPA",
+  "pipeline": { "source": "Buckeye", "connections": [], "defaultDelay": 0 },
+  "gradeMap": { "regular": [], "premium": [] },
+  "products": {
+    "regular": { "label": "Regular", "tanks": [] },
+    "premium": { "label": "Premium", "tanks": [] }
+  }
+}
