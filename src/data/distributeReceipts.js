@@ -15,7 +15,7 @@ export function distributeReceipts(receipts, date, timeSlot) {
   const slotEndHour   = slotStartHour + 6;
 
   // Window boundaries as ms since epoch
-  const dayMs = new Date(date).getTime();
+  const dayMs = new Date(date + 'T00:00:00').getTime(); // local time — must match T4 datetime parsing convention
   const windowStart = dayMs + slotStartHour * 3600_000;
   const windowEnd   = dayMs + slotEndHour   * 3600_000;
 

@@ -84,7 +84,7 @@ const thBase = {
 };
 
 export default function BlendPlannerGrid({
-  grid, terminalConfig, toggleBlend,
+  grid, terminalConfig, toggleBlend, toggleIdle,
   receipts = [], liftings = [],
   receiptAllocations = {}, rackTankAssignments = {},
   setReceiptAllocation, setRackTank,
@@ -190,6 +190,7 @@ export default function BlendPlannerGrid({
                       cells={cellsByTank[tank.id]}
                       openingFillPct={openingPct[tank.id] ?? 0}
                       toggleBlend={toggleBlend}
+                      onToggleIdle={toggleIdle}
                       onCellClick={setSelectedPeriod}
                     />
                   ))}

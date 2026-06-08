@@ -50,6 +50,9 @@ export function buildPlanGrid({
   }
 
   const lastPeriod = {}; // tankId → { closingInventory, closingRVP }
+  const currentRackTank    = {}; // productKey → tankId
+  const currentReceiptTank = {}; // productKey → tankId
+  const lastRackedTank     = {}; // productKey → tankId
   const result = [];
 
   for (const date of dates) {
@@ -75,11 +78,45 @@ export function buildPlanGrid({
               if (vol > 0) (receiptAssignment[tank.id] ??= []).push({ volume: vol, rvp });
             }
           } else {
-            // Phase 1 fallback: first non-blending tank
-            const assignTank =
-              product.tanks.find(t => !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive)
-              ?? product.tanks[0];
-            if (assignTank) (receiptAssignment[assignTank.id] ??= []).push({ volume: sliceVol, rvp });
+            // Carry-forward receipt tank
+            let receiptTankId = currentReceiptTank[productKey];
+
+            // Validate: not blending, not manually idle, has space
+            const receiptValid = receiptTankId && product.tanks.some(t =>
+              t.id === receiptTankId &&
+              !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
+              !manualInputs[`${t.id}-${date}-${timeSlot}`]?.idle &&
+              (t.safeFill - (lastPeriod[t.id]?.closingInventory ??
+                openingMap[t.id]?.pumpable ?? 0)) > 0
+            );
+
+            if (!receiptValid) {
+              // Roll to last-racked tank if available, else most space
+              const candidate = lastRackedTank[productKey];
+              const candidateOk = candidate && product.tanks.some(t =>
+                t.id === candidate &&
+                !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
+                !manualInputs[`${t.id}-${date}-${timeSlot}`]?.idle
+              );
+              if (candidateOk) {
+                receiptTankId = candidate;
+              } else {
+                const pool = product.tanks.filter(t =>
+                  !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
+                  !manualInputs[`${t.id}-${date}-${timeSlot}`]?.idle
+                );
+                receiptTankId = (pool.length ? pool : product.tanks).reduce((bestId, t) => {
+                  const space    = t.safeFill - (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0);
+                  const bestTank = product.tanks.find(t2 => t2.id === bestId);
+                  const bestSpace = bestTank
+                    ? bestTank.safeFill - (lastPeriod[bestId]?.closingInventory ?? openingMap[bestId]?.pumpable ?? 0)
+                    : -Infinity;
+                  return space > bestSpace ? t.id : bestId;
+                }, null);
+              }
+            }
+            if (receiptTankId) currentReceiptTank[productKey] = receiptTankId;
+            if (receiptTankId) (receiptAssignment[receiptTankId] ??= []).push({ volume: sliceVol, rvp });
           }
         }
 
@@ -88,23 +125,43 @@ export function buildPlanGrid({
         const totalLifting = productPeriodLiftings[periodKey] ?? 0;
         const assignment   = rackTankAssignments[periodKey] ?? null;
 
-        let primaryRackId  = assignment?.primary  ?? null;
-        let handoffRackId  = assignment?.handoff  ?? null;
-        let handoffVolume  = assignment?.handoffVolume ?? 0;
+        // rack persists until blend/heel forces handoff — per operator spec
+        let primaryRackId = assignment?.primary ?? null;
+        let handoffRackId = assignment?.handoff  ?? null;
+        let handoffVolume = assignment?.handoffVolume ?? 0;
 
-        // Auto-select primary if none designated and demand exists
-        if (!primaryRackId && totalLifting !== 0) {
-          // TODO: Kelly — confirm auto-select logic
-          const nonBlending = product.tanks.filter(
-            t => !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive
+        // Determine rack tank for this period
+        // Manual override takes precedence
+        if (!primaryRackId) {
+          const current = currentRackTank[productKey];
+          const currentStillValid = current && product.tanks.some(t =>
+            t.id === current &&
+            !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
+            (lastPeriod[current]?.closingInventory ?? openingMap[current]?.pumpable ?? 0) >
+              (product.tanks.find(t => t.id === current)?.heel ?? 0)
           );
-          const pool = nonBlending.length ? nonBlending : product.tanks;
-          primaryRackId = pool.reduce((bestId, tank) => {
-            const rvp     = lastPeriod[tank.id]?.closingRVP ?? openingMap[tank.id]?.rvp ?? 0;
-            const bestRvp = lastPeriod[bestId]?.closingRVP  ?? openingMap[bestId]?.rvp  ?? 0;
-            return rvp > bestRvp ? tank.id : bestId;
-          }, pool[0]?.id ?? null);
+
+          if (currentStillValid) {
+            primaryRackId = current;
+          } else {
+            // Current rack tank is gone — pick next highest volume non-blending above heel
+            const nonBlending = product.tanks.filter(t =>
+              !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
+              (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0) >
+                (t.heel ?? 0)
+            );
+            const pool = nonBlending.length ? nonBlending : product.tanks;
+            primaryRackId = pool.reduce((bestId, tank) => {
+              const vol     = lastPeriod[tank.id]?.closingInventory ?? openingMap[tank.id]?.pumpable ?? 0;
+              const bestVol = lastPeriod[bestId]?.closingInventory  ?? openingMap[bestId]?.pumpable  ?? 0;
+              return vol > bestVol ? tank.id : bestId;
+            }, pool[0]?.id ?? null);
+          }
         }
+
+        // Persist the selected rack tank for this product
+        if (primaryRackId) currentRackTank[productKey] = primaryRackId;
+        if (primaryRackId) lastRackedTank[productKey]  = primaryRackId;
 
         // Volume allocation: primary gets remainder, handoff gets its slice
         const clampedHandoff = Math.min(Math.abs(handoffVolume), Math.abs(totalLifting));
@@ -135,28 +192,59 @@ export function buildPlanGrid({
                              : isHandoff ? handoffLift
                              : 0;
 
-          const receiptVolume = tankReceipts.reduce((s, r) => s + r.volume, 0);
-          const hasConflict   = blendActive && receiptVolume > 0;
+          const receiptVolume  = tankReceipts.reduce((s, r) => s + r.volume, 0);
+          const isManualIdle   = manual.idle ?? false;
+          const hasConflict    = blendActive && (receiptVolume > 0 || isRackTank);
 
-          const closingInventory = opening + (hasConflict ? 0 : receiptVolume) + rackLoadings;
+          // safeFill cap — spill to next available tank per Kelly spec
+          const spaceAvailable = Math.max(0, tank.safeFill - opening - rackLoadings);
+          const cappedReceipts = hasConflict ? 0 : Math.min(receiptVolume, spaceAvailable);
+          const spillVolume    = hasConflict ? 0 : (receiptVolume - cappedReceipts);
+
+          const cappedTankReceipts = spillVolume > 0 && receiptVolume > 0
+            ? tankReceipts.map(r => ({ ...r, volume: r.volume * (cappedReceipts / receiptVolume) }))
+            : (hasConflict ? [] : tankReceipts);
+
+          if (spillVolume > 0) {
+            const spillRvp = tankReceipts.reduce((s, r) => s + r.rvp * r.volume, 0) / receiptVolume;
+            const nextTank = product.tanks.find(
+              t => t.id !== tank.id &&
+                   !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
+                   (t.safeFill - (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0)) > 0
+            );
+            if (nextTank) (receiptAssignment[nextTank.id] ??= []).push({ volume: spillVolume, rvp: spillRvp });
+          }
+
+          const closingInventory = opening + cappedReceipts + rackLoadings;
 
           const closingRVP = calcClosingRVP({
             openingRVP,
             openingVolume: opening,
             heel: tank.heel,
-            receipts: hasConflict ? [] : tankReceipts,
+            receipts: cappedTankReceipts,
           });
 
           const fillPct = closingInventory / tank.safeFill;
           const space   = tank.safeFill - closingInventory;
 
           // Status — derived only, never manually set
+          const belowHeel = closingInventory < tank.heel;
+
           let status;
-          if      (hasConflict)       status = "CONFLICT";
-          else if (blendActive)       status = "BLEND";
-          else if (receiptVolume > 0) status = "RECEIPT";
-          else if (isRackTank)        status = "RACK";
-          else                        status = "IDLE";
+          if      (isManualIdle)                     status = "IDLE";
+          else if (closingInventory > tank.safeFill)  status = "OVERFILL";
+          else if (hasConflict)                       status = "CONFLICT";
+          else if (blendActive)                       status = "BLEND";
+          else {
+            const onRack    = isRackTank && totalLifting !== 0;
+            const onReceipt = cappedReceipts > 0;
+            if      (onRack && onReceipt) status = "RACK+RCV";
+            else if (onRack)              status = "RACK";
+            else if (onReceipt)           status = "RECEIPT";
+            else                          status = "IDLE";
+          }
+          if (belowHeel && status === 'IDLE') status = 'LOW';
+          if (belowHeel && status === 'RACK') status = 'LOW';
 
           result.push({
             tankId: tank.id,
@@ -173,6 +261,11 @@ export function buildPlanGrid({
             fillPct,
             space,
             status,
+            isManualIdle,
+            manualIdle: isManualIdle,
+            spillVolume,
+            spillWarning: spillVolume > 0,
+            belowHeel,
             conflictMessage: hasConflict
               ? "Pipeline receipt blocked — tank is blending. Reallocate this batch."
               : undefined,

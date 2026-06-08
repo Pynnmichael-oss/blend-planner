@@ -19,7 +19,11 @@ export function parseT4(rawText, terminalConfig) {
     const cols = line.split('\t');
     if (cols.length < 14) continue;
 
-    const startDatetime = cols[0].trim();
+    const raw = cols[0].trim();
+    const dt = new Date(raw);
+    const startDatetime = isNaN(dt.getTime())
+      ? raw
+      : `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}T${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}:00`;
     const lineCode      = cols[3].trim();
     const batchCode     = cols[5].trim();
     const supplier      = cols[7].trim();

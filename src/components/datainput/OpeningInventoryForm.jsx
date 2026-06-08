@@ -70,7 +70,7 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
                       step="0.1"
                       value={toK(inv.pumpable)}
                       onChange={e => handleChange(tank.id, 'pumpable', e.target.value)}
-                      style={{ ...inputBase, width: '52px', color: C.text }}
+                      style={{ ...inputBase, width: '62px', color: C.text }}
                     />
                   </td>
                   <td style={{ padding: '3px 4px', textAlign: 'right' }}>
@@ -79,7 +79,7 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
                       step="0.1"
                       value={inv.rvp}
                       onChange={e => handleChange(tank.id, 'rvp', e.target.value)}
-                      style={{ ...inputBase, width: '40px', color: C.blue }}
+                      style={{ ...inputBase, width: '48px', color: C.blue }}
                     />
                   </td>
                 </tr>

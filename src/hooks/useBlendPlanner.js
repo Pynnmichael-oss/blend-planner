@@ -31,6 +31,9 @@ export default function useBlendPlanner() {
   const [receiptAllocations, setReceiptAllocations] = useState({});
   // Shape: "product-date-slot" → { primary: tankId, handoff: tankId|null, handoffVolume: number }
   const [rackTankAssignments, setRackTankAssignments] = useState({});
+  const [parsedReceipts, setParsedReceipts] = useState(null);
+  const [rvpValues,      setRvpValues]      = useState({});
+  const [rvpConfirmed,   setRvpConfirmed]   = useState({});
 
   const terminalConfig = TERMINAL_CONFIGS[terminalId];
 
@@ -48,6 +51,18 @@ export default function useBlendPlanner() {
     setManualInputs(prev => ({
       ...prev,
       [key]: { ...prev[key], blendActive: !prev[key]?.blendActive },
+    }));
+  }
+
+  function toggleIdle(tankId, date, timeSlot) {
+    const key = `${tankId}-${date}-${timeSlot}`;
+    setManualInputs(prev => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        idle: !prev[key]?.idle,
+        blendActive: false,
+      },
     }));
   }
 
@@ -77,7 +92,10 @@ export default function useBlendPlanner() {
     grid,
     setTerminalId, setStartDate, setOpeningInventory, setReceipts,
     setPlanDays, setLiftings, resetLiftings,
-    toggleBlend,
+    toggleBlend, toggleIdle,
     setReceiptAllocation, setRackTank,
+    parsedReceipts, setParsedReceipts,
+    rvpValues, setRvpValues,
+    rvpConfirmed, setRvpConfirmed,
   };
 }
