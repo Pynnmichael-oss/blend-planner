@@ -9,7 +9,7 @@ import tampaConfig from '../config/tampa.json';
 import { fortWorthOpeningInventory } from '../mock/fort-worth-inventory';
 import { fortWorthReceipts } from '../mock/fort-worth-t4';
 import { buildPlanGrid } from '../data/inventoryCalc';
-import { buildLiftingsGrid } from '../data/liftingsCurve';
+import { buildLiftingsGridWithBase, DEFAULT_DAILY_BASE } from '../data/liftingsCurve';
 
 const TERMINAL_CONFIGS = {
   'fort-worth': fortWorthConfig,
@@ -26,7 +26,7 @@ export default function useBlendPlanner() {
   const [manualInputs,     setManualInputs]     = useState({});
   const [planDays,         setPlanDays]         = useState(8);
   const [liftings,         setLiftings]         = useState(() =>
-    buildLiftingsGrid(fortWorthConfig, TODAY, 8)
+    buildLiftingsGridWithBase(fortWorthConfig, TODAY, 8, DEFAULT_DAILY_BASE)
   );
   const [receiptAllocations, setReceiptAllocations] = useState({});
   // Shape: "product-date-slot" → { primary: tankId, handoff: tankId|null, handoffVolume: number }
@@ -67,7 +67,7 @@ export default function useBlendPlanner() {
   }
 
   function resetLiftings() {
-    setLiftings(buildLiftingsGrid(terminalConfig, startDate, planDays));
+    setLiftings(buildLiftingsGridWithBase(terminalConfig, startDate, planDays, DEFAULT_DAILY_BASE));
     setRackTankAssignments({});
   }
 

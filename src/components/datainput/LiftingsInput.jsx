@@ -1,14 +1,26 @@
-import { buildLiftingsGrid } from '../../data/liftingsCurve';
-import { TIME_SLOTS } from '../../data/inventoryCalc';
+import { useState } from 'react';
+import { buildLiftingsGridWithBase, DEFAULT_DAILY_BASE } from '../../data/liftingsCurve';
 
-const SLOT_LABEL = { "00-05": "00:00", "06-11": "06:00", "12-17": "12:00", "18-23": "18:00" };
-const WEEKDAY_ABBR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const SLOT_DIST = { '00-05': 0.15, '06-11': 0.30, '12-17': 0.35, '18-23': 0.20 };
+const TIME_SLOTS = ['00-05', '06-11', '12-17', '18-23'];
+const WEEKDAY_MULT = {
+  Monday: 1.0, Tuesday: 1.05, Wednesday: 1.0, Thursday: 1.05,
+  Friday: 1.1, Saturday: 0.8, Sunday: 0.6,
+};
+const WEEKDAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const WEEKDAY_ABBR  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const C = {
-  bg: '#0f1117', panel: '#1a1d27', border: '#2a2d3a',
-  text: '#e2e8f0', muted: '#64748b', amber: '#f59e0b',
+  bg: '#0a0c12', panel: '#111827', border: '#1e293b',
+  text: '#f1f5f9', muted: '#64748b', amber: '#f59e0b',
 };
 
+function utcWeekdayName(dateStr) {
+  return WEEKDAY_NAMES[new Date(dateStr + 'T00:00:00Z').getUTCDay()];
+}
+function utcWeekdayAbbr(dateStr) {
+  return WEEKDAY_ABBR[new Date(dateStr + 'T00:00:00Z').getUTCDay()];
+}
 function getDates(startDate, planDays) {
   const dates = [];
   for (let i = 0; i < planDays; i++) {
@@ -18,111 +30,189 @@ function getDates(startDate, planDays) {
   }
   return dates;
 }
-
 function shortDate(dateStr) {
   const [, m, d] = dateStr.split('-');
   return `${parseInt(m)}/${parseInt(d)}`;
 }
 
-function weekdayAbbr(dateStr) {
-  return WEEKDAY_ABBR[new Date(dateStr + 'T00:00:00Z').getUTCDay()];
-}
+const thStyle = {
+  padding: '4px 8px', fontSize: '10px', color: C.muted, fontWeight: 'normal',
+  borderBottom: `1px solid ${C.border}`, textAlign: 'left', whiteSpace: 'nowrap',
+};
+const tdStyle = {
+  padding: '3px 8px', fontSize: '11px', color: C.text,
+  borderBottom: `0.5px solid ${C.border}`, whiteSpace: 'nowrap',
+};
 
 export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChange, planDays, startDate }) {
-  const dates = getDates(startDate, planDays);
+  const [baseReg,  setBaseReg]  = useState(String(DEFAULT_DAILY_BASE.regular));
+  const [basePrem, setBasePrem] = useState(String(DEFAULT_DAILY_BASE.premium));
 
-  // Build lookup: tankId-date-slot → volume
+  const dates = getDates(startDate, planDays);
+  const productKeys = Object.keys(terminalConfig.products);
+
+  // Build lookup: tankId-date-timeSlot → volume
   const lookup = {};
   for (const l of liftings) lookup[`${l.tankId}-${l.date}-${l.timeSlot}`] = l.volume;
 
-  // Sum liftings for a product/date/slot across all its tanks
-  function getProductTotal(productKey, date, timeSlot) {
+  // Sum absolute liftings for a product on a given date across all slots and tanks
+  function getDayTotal(productKey, date) {
     const tanks = terminalConfig.products[productKey]?.tanks ?? [];
-    return tanks.reduce((sum, t) => sum + (lookup[`${t.id}-${date}-${timeSlot}`] ?? 0), 0);
+    let sum = 0;
+    for (const slot of TIME_SLOTS) {
+      for (const tank of tanks) {
+        sum += lookup[`${tank.id}-${date}-${slot}`] ?? 0;
+      }
+    }
+    return Math.abs(Math.round(sum));
   }
 
-  // On edit: redistribute new total evenly across tanks for this product/date/slot
-  function handleCellChange(productKey, date, timeSlot, rawValue) {
-    const totalNeg = -(Math.abs(parseFloat(rawValue) || 0));
+  // Expected daily total from current base inputs (for amber override detection)
+  function getExpected(productKey, date) {
+    const base = productKey === 'regular'
+      ? (parseFloat(baseReg) || 0)
+      : (parseFloat(basePrem) || 0);
+    const mult = WEEKDAY_MULT[utcWeekdayName(date)] ?? 1;
+    return Math.round(base * mult);
+  }
+
+  // Redistribute a new daily total across all 4 slots for that product/date
+  function handleDayChange(productKey, date, rawValue) {
+    const newTotal = Math.abs(parseFloat(rawValue) || 0);
     const tanks = terminalConfig.products[productKey]?.tanks ?? [];
     if (!tanks.length) return;
-    const perTank = Math.round(totalNeg / tanks.length);
+    const tankIds = new Set(tanks.map(t => t.id));
 
     const updated = liftings.map(l => {
-      if (l.date === date && l.timeSlot === timeSlot && tanks.some(t => t.id === l.tankId)) {
-        return { ...l, volume: perTank };
-      }
-      return l;
+      if (l.date !== date || !tankIds.has(l.tankId)) return l;
+      const productOfTank = Object.entries(terminalConfig.products)
+        .find(([, p]) => p.tanks.some(t => t.id === l.tankId))?.[0];
+      if (productOfTank !== productKey) return l;
+      const slotTotal = Math.round(-newTotal * (SLOT_DIST[l.timeSlot] ?? 0.25));
+      return { ...l, volume: Math.round(slotTotal / tanks.length) };
     });
     onLiftingsChange(updated);
   }
 
-  const thStyle = {
-    padding: '2px 4px', fontSize: '10px', color: C.muted, fontWeight: 'normal',
-    borderBottom: `1px solid ${C.border}`, borderRight: `1px solid ${C.border}`,
-    textAlign: 'center', backgroundColor: C.panel, whiteSpace: 'nowrap',
+  function handleApply() {
+    const base = {
+      regular: parseFloat(baseReg) || 0,
+      premium: parseFloat(basePrem) || 0,
+    };
+    onLiftingsChange(buildLiftingsGridWithBase(terminalConfig, startDate, planDays, base));
+  }
+
+  function handleReset() {
+    setBaseReg(String(DEFAULT_DAILY_BASE.regular));
+    setBasePrem(String(DEFAULT_DAILY_BASE.premium));
+    onLiftingsChange(buildLiftingsGridWithBase(terminalConfig, startDate, planDays, DEFAULT_DAILY_BASE));
+  }
+
+  const inputStyle = {
+    width: '72px', textAlign: 'right', fontSize: '11px',
+    backgroundColor: C.bg, color: C.text, border: `1px solid ${C.border}`,
+    borderRadius: '3px', padding: '2px 4px',
   };
 
   return (
     <div>
-      <div style={{ fontSize: '10px', color: C.amber, fontWeight: 'bold', letterSpacing: '0.07em', marginBottom: '6px', textTransform: 'uppercase' }}>
-        Rack Liftings (bbl)
+      <div style={{ fontSize: '10px', color: C.amber, fontWeight: 'bold', letterSpacing: '0.07em', marginBottom: '10px', textTransform: 'uppercase' }}>
+        Rack Liftings
       </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ borderCollapse: 'collapse', fontSize: '11px' }}>
-          <thead>
-            <tr>
-              <th style={{ ...thStyle, textAlign: 'left', minWidth: '60px' }}></th>
-              {dates.map(date => (
-                <th key={date} colSpan={4} style={{ ...thStyle, color: C.amber }}>
-                  {weekdayAbbr(date)} {shortDate(date)}
-                </th>
-              ))}
-            </tr>
-            <tr>
-              <th style={{ ...thStyle, textAlign: 'left' }}></th>
-              {dates.flatMap(date =>
-                TIME_SLOTS.map(slot => (
-                  <th key={`${date}-${slot}`} style={thStyle}>{SLOT_LABEL[slot]}</th>
-                ))
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(terminalConfig.products).map(([pk, product]) => (
-              <tr key={pk} style={{ borderTop: `1px solid ${C.border}` }}>
-                <td style={{ padding: '3px 6px', color: C.text, whiteSpace: 'nowrap', backgroundColor: C.panel, fontSize: '11px' }}>
-                  {product.label}
-                </td>
-                {dates.flatMap(date =>
-                  TIME_SLOTS.map(slot => {
-                    const total = getProductTotal(pk, date, slot);
-                    return (
-                      <td key={`${date}-${slot}`} style={{ padding: '1px 2px', borderRight: `1px solid ${C.border}`, backgroundColor: C.bg }}>
-                        <input
-                          type="number"
-                          value={Math.abs(total) || ''}
-                          onChange={e => handleCellChange(pk, date, slot, e.target.value)}
-                          className="font-mono"
-                          style={{
-                            width: '54px', textAlign: 'right', fontSize: '11px',
-                            backgroundColor: 'transparent', color: C.text,
-                            border: 'none', outline: 'none', padding: '2px 3px',
-                          }}
-                        />
-                      </td>
-                    );
-                  })
-                )}
-              </tr>
+
+      {/* TOP: Weekly base rate */}
+      <div style={{
+        backgroundColor: C.panel, border: `1px solid ${C.border}`, borderRadius: '6px',
+        padding: '10px 12px', marginBottom: '14px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '11px', color: C.muted }}>Regular</span>
+            <input
+              type="number"
+              value={baseReg}
+              onChange={e => setBaseReg(e.target.value)}
+              className="font-mono"
+              style={inputStyle}
+            />
+            <span style={{ fontSize: '11px', color: C.muted }}>bbl/day</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '11px', color: C.muted }}>Premium</span>
+            <input
+              type="number"
+              value={basePrem}
+              onChange={e => setBasePrem(e.target.value)}
+              className="font-mono"
+              style={inputStyle}
+            />
+            <span style={{ fontSize: '11px', color: C.muted }}>bbl/day</span>
+          </div>
+
+          <button
+            onClick={handleApply}
+            style={{
+              padding: '3px 14px', fontSize: '11px', fontWeight: 'bold',
+              backgroundColor: C.amber, color: '#000',
+              border: 'none', borderRadius: '3px', cursor: 'pointer',
+            }}
+          >
+            Apply
+          </button>
+        </div>
+        <div style={{ fontSize: '10px', color: C.muted, marginTop: '6px' }}>
+          Curve distributes across days and time slots automatically
+        </div>
+      </div>
+
+      {/* BOTTOM: Day totals table */}
+      <table style={{ borderCollapse: 'collapse', fontSize: '11px' }}>
+        <thead>
+          <tr>
+            <th style={thStyle}>Day</th>
+            <th style={{ ...thStyle, paddingRight: '16px' }}>Date</th>
+            {productKeys.map(pk => (
+              <th key={pk} style={{ ...thStyle, color: C.amber }}>
+                {terminalConfig.products[pk].label}
+              </th>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        </thead>
+        <tbody>
+          {dates.map(date => (
+            <tr key={date}>
+              <td style={{ ...tdStyle, color: C.muted }}>{utcWeekdayAbbr(date)}</td>
+              <td style={{ ...tdStyle, color: C.muted, paddingRight: '16px' }}>{shortDate(date)}</td>
+              {productKeys.map(pk => {
+                const actual   = getDayTotal(pk, date);
+                const expected = getExpected(pk, date);
+                const isOverride = actual !== expected;
+                return (
+                  <td key={pk} style={{ padding: '2px 4px', borderBottom: `0.5px solid ${C.border}` }}>
+                    <input
+                      type="number"
+                      value={actual || ''}
+                      onChange={e => handleDayChange(pk, date, e.target.value)}
+                      className="font-mono"
+                      style={{
+                        ...inputStyle,
+                        color:  isOverride ? C.amber : C.text,
+                        border: `1px solid ${isOverride ? C.amber : C.border}`,
+                      }}
+                    />
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
       <button
-        onClick={() => onLiftingsChange(buildLiftingsGrid(terminalConfig, startDate, planDays))}
+        onClick={handleReset}
         style={{
-          marginTop: '6px', fontSize: '11px', padding: '2px 8px',
+          marginTop: '10px', fontSize: '11px', padding: '2px 8px',
           backgroundColor: C.panel, color: C.muted,
           border: `1px solid ${C.border}`, borderRadius: '3px', cursor: 'pointer',
         }}

@@ -21,6 +21,8 @@ const SLOT_CONFIG = [
 
 const DAILY_BASE = { regular: -13200, premium: -3800 };
 
+export const DEFAULT_DAILY_BASE = { regular: 13200, premium: 3800 };
+
 // { regular: { "Monday|00:00-05:59": -1980, ... }, premium: { ... } }
 export const defaultLiftingsCurve = (() => {
   const curve = { regular: {}, premium: {} };
@@ -45,6 +47,32 @@ function utcWeekday(dateStr) {
 export function getDefaultLifting(product, weekday, timeSlot) {
   const curveKey = CALC_TO_CURVE[timeSlot] ?? timeSlot;
   return defaultLiftingsCurve[product]?.[`${weekday}|${curveKey}`] ?? 0;
+}
+
+// dailyBase: { regular: number, premium: number } — positive bbl/day values
+export function buildLiftingsGridWithBase(terminalConfig, startDate, planDays, dailyBase) {
+  const result = [];
+  for (let i = 0; i < planDays; i++) {
+    const d = new Date(startDate + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + i);
+    const date    = d.toISOString().slice(0, 10);
+    const weekday = utcWeekday(date);
+
+    for (const [productKey, product] of Object.entries(terminalConfig.products)) {
+      const tanks = product.tanks;
+      if (tanks.length === 0) continue;
+      const baseAbs = dailyBase[productKey] ?? 0;
+      const mult    = WEEKDAY_MULT[weekday] ?? 1;
+      for (const { calcKey: timeSlot, dist } of SLOT_CONFIG) {
+        const total   = Math.round(-baseAbs * mult * dist);
+        const perTank = Math.round(total / tanks.length);
+        for (const tank of tanks) {
+          result.push({ tankId: tank.id, date, timeSlot, volume: perTank });
+        }
+      }
+    }
+  }
+  return result;
 }
 
 export function buildLiftingsGrid(terminalConfig, startDate, planDays) {
