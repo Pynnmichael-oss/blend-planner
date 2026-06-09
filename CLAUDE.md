@@ -151,7 +151,13 @@ Each `src/config/*.json` follows this structure:
   closingRVP:       8.88,
   fillPct:          0.751,          // closingInventory / safeFill
   space:            12553,          // safeFill - closingInventory
-  status:           "RACK"          // BLEND | RACK | RECEIPT | IDLE
+  status:           "RACK",         // see Status Values below
+  isManualIdle:     false,          // set via toggleIdle
+  manualIdle:       false,          // alias for isManualIdle
+  spillVolume:      0,              // bbls that overflowed safeFill cap
+  spillWarning:     false,          // spillVolume > 0
+  belowHeel:        false,          // closingInventory < tank.heel
+  conflictMessage:  undefined,      // set when blendActive conflicts with receipt/rack
 }
 ```
 
@@ -197,10 +203,15 @@ openingInventory + receipts + liftings
          ├─ fillPct = closingInventory / safeFill
          │
          └─ status (derived, never set manually):
+               isManualIdle → IDLE
+               closingInventory > safeFill → OVERFILL
+               blendActive + receipt/rack conflict → CONFLICT
                blendActive → BLEND
-               rackLoadings < 0 → RACK
-               receiptVolume > 0 → RECEIPT
+               onRack + onReceipt → RACK+RCV
+               onRack → RACK
+               onReceipt → RECEIPT
                otherwise → IDLE
+               belowHeel + IDLE/RACK → LOW
 ```
 
 ### distributeReceipts logic
@@ -224,31 +235,43 @@ All state lives in `useBlendPlanner` (src/hooks/useBlendPlanner.js).
 | State | Type | Default | Purpose |
 |-------|------|---------|---------|
 | `terminalId` | string | `"fort-worth"` | active terminal |
+| `startDate` | string | `TODAY` (ISO date) | grid start anchor (independent, not derived from receipts) |
 | `openingInventory` | `[{tankId, pumpable, rvp}]` | mock data | tank opening state |
 | `receipts` | `PipelineReceipt[]` | mock T4 data | pipeline schedule |
-| `manualInputs` | `{ [tankId-date-slot]: { blendActive } }` | `{}` | blend toggles |
+| `manualInputs` | `{ [tankId-date-slot]: { blendActive, idle } }` | `{}` | blend/idle toggles |
 | `planDays` | number | 8 | grid horizon |
 | `liftings` | `[{tankId, date, timeSlot, volume}]` | from curve | rack demand per tank |
 | `receiptAllocations` | `{ [batchCode-date-slot-tankId]: volume }` | `{}` | per-tank receipt overrides |
-| `liftingAllocations` | `{ [product-date-slot-tankId]: volume }` | `{}` | per-tank lifting overrides |
+| `rackTankAssignments` | `{ [product-date-slot]: { primary, handoff, handoffVolume } }` | `{}` | which tanks rack per period |
+| `parsedReceipts` | `PipelineReceipt[] \| null` | `null` | staging area for T4 parse before confirm |
+| `rvpValues` | `{ [batchCode]: number }` | `{}` | RVP entered in T4PasteInput before confirm |
+| `rvpConfirmed` | `{ [batchCode]: boolean }` | `{}` | which batches have RVP confirmed |
 
 ### Derived (useMemo)
 - `terminalConfig` — lookup from `TERMINAL_CONFIGS[terminalId]`
-- `startDate` — earliest `startDatetime` date in receipts
 - `grid` — full `TimePeriod[]` from `buildPlanGrid`
 
 ### Actions exposed
-- `setTerminalId`, `setOpeningInventory`, `setReceipts`, `setPlanDays`
-- `setLiftings`, `resetLiftings` — reset rebuilds from curve + clears liftingAllocations
+- `setTerminalId`, `setStartDate`, `setOpeningInventory`, `setReceipts`, `setPlanDays`
+- `setLiftings`, `resetLiftings` — reset rebuilds from curve + clears `rackTankAssignments`
 - `toggleBlend(tankId, date, timeSlot)` — flips `blendActive` in manualInputs
+- `toggleIdle(tankId, date, timeSlot)` — flips `idle` in manualInputs (also clears blendActive)
 - `setReceiptAllocation(batchCode, date, timeSlot, tankId, volume)`
-- `setLiftingAllocation(product, date, timeSlot, tankId, volume)`
+- `setRackTank(product, date, timeSlot, primary, handoff?, handoffVolume?)` — sets primary/handoff rack tanks for a period
+- `setParsedReceipts`, `setRvpValues`, `setRvpConfirmed`
 
-### Allocation override precedence
-1. `receiptAllocations` — explicit per-tank batch volume → used if any tank has a value
-2. Phase 1 fallback — entire product batch assigned to first non-blending tank
-3. `liftingAllocations` — explicit per-tank lifting override
-4. `liftings` array — curve-derived even distribution across tanks
+### Rack tank assignment model
+`rackTankAssignments` stores `{ primary: tankId, handoff: tankId|null, handoffVolume: number }` per `product-date-slot`.
+
+- **primary** gets `totalLifting − handoffVolume` (the majority of liftings)
+- **handoff** gets `handoffVolume` (optional split at tank changeover)
+- Manual assignment takes precedence; auto-selection carries forward the current rack tank until it goes below heel or starts blending, then rolls to the highest-volume available tank
+- `resetLiftings()` clears both `liftings` (rebuilds from curve) and `rackTankAssignments`
+
+### Receipt allocation override precedence
+1. `receiptAllocations` — explicit per-tank batch volume → used if any tank in the product has a keyed value
+2. Carry-forward: keep assigning to the same receipt tank as previous period, validating it's not blending/idle and has space
+3. Fallback to `lastRackedTank`, then highest-space non-blending tank
 
 ---
 
@@ -386,12 +409,12 @@ Grouped under REGULAR / PREMIUM sub-headers (9px amber). No product badge column
 
 | Location | TODO |
 |----------|------|
-| `inventoryCalc.js:56,106` | Receipt + lifting default allocation — phase 1 assigns receipts to first non-blending tank; Kelly to define tank priority rules |
-| `parseT4.js:48` | `rvp: null` — wire to pipeline RVP data source (Explorer API or EDI) |
+| `inventoryCalc.js:63` | Receipt carry-forward default allocation — Kelly to define tank priority rules for receipt assignment |
+| `parseT4.js:52` | `rvp: null` — wire to pipeline RVP data source (Explorer API or EDI) |
 | `blendLogic.js` | Entire blend signal rule set — Kelly spec not yet finalised |
 | `liftingsCurve.js` | Daily base totals (−13,200 regular / −3,800 premium) are estimates — validate against TMS actuals |
 | `butaneCalc.js` | Truck size (190 bbl) and butane RVP (52) are constants — confirm with Kelly if these vary by season/supplier |
-| `AllocationPanel.jsx` | Unallocated receipt warning fires at >0.5 bbl — confirm rounding tolerance |
+| `AllocationPanel.jsx:234` | Unallocated receipt warning fires at >0.5 bbl — confirm rounding tolerance |
 | `tampa.json` | All tank arrays are empty — terminal config needs to be populated when Tampa is onboarded |
 
 ---
@@ -406,5 +429,6 @@ Grouped under REGULAR / PREMIUM sub-headers (9px amber). No product badge column
 - `openingInventory` stores full bbls internally. Only `OpeningInventoryForm` converts to/from thousands for display. Do not change this in any other component.
 - All dates use UTC (`T00:00:00Z` suffix) to avoid timezone drift across the planning window.
 - `rackLoadings` is negative for outbound volume. Liftings are always negative numbers.
-- The `liftings` array (from `buildLiftingsGrid`) provides the baseline. `liftingAllocations` overrides it per cell. Do not merge them into one structure.
+- The `liftings` array (from `buildLiftingsGrid`) provides the baseline volume per tank/period. `rackTankAssignments` controls which tank(s) rack and handles the primary/handoff split. Do not merge them into one structure.
+- `recharts` is listed in `package.json` but not yet used. Do not remove it without checking with Michael — it may be planned for a future chart view.
 - `font-mono` Tailwind class is used for all numeric displays. Do not replace with inline `fontFamily: 'monospace'` except where Tailwind classes are unavailable (SVG, etc).

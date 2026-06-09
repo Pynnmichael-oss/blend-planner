@@ -29,6 +29,6 @@ export function calcButaneDemand({ pumpable, heel, rvpTarget, rvpActual }) {
   return {
     butane_bbls,
     trucks_min: Math.floor(butane_bbls / TRUCK_BBLS),
-    trucks_max: Math.ceil(butane_bbls / TRUCK_BBLS),
+    trucks_max: Math.floor(butane_bbls / TRUCK_BBLS), // truncate both — rounding up risks breaching 9.0 ceiling
   };
 }

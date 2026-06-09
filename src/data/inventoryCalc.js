@@ -144,7 +144,8 @@ export function buildPlanGrid({
           if (currentStillValid) {
             primaryRackId = current;
           } else {
-            // Current rack tank is gone — pick next highest volume non-blending above heel
+            // rack auto-select: highest RVP first (most finished product ships,
+            // raw product stays) — per blend spec
             const nonBlending = product.tanks.filter(t =>
               !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
               (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0) >
@@ -152,9 +153,9 @@ export function buildPlanGrid({
             );
             const pool = nonBlending.length ? nonBlending : product.tanks;
             primaryRackId = pool.reduce((bestId, tank) => {
-              const vol     = lastPeriod[tank.id]?.closingInventory ?? openingMap[tank.id]?.pumpable ?? 0;
-              const bestVol = lastPeriod[bestId]?.closingInventory  ?? openingMap[bestId]?.pumpable  ?? 0;
-              return vol > bestVol ? tank.id : bestId;
+              const rvp     = lastPeriod[tank.id]?.closingRVP ?? openingMap[tank.id]?.rvp ?? 0;
+              const bestRvp = lastPeriod[bestId]?.closingRVP  ?? openingMap[bestId]?.rvp  ?? 0;
+              return rvp > bestRvp ? tank.id : bestId;
             }, pool[0]?.id ?? null);
           }
         }

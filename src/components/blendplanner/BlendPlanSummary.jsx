@@ -58,8 +58,13 @@ function BlendCalculator({ blend, terminalConfig }) {
 
   // Spec formula: 0.02 × TOV × (rvpTarget - rvpActual)
   const butane = (tov && margin !== null && margin > 0) ? 0.02 * tov * margin : null;
-  const minTrucks = butane !== null ? Math.floor(butane / 190) : null;
-  const maxTrucks = butane !== null ? Math.ceil(butane / 190)  : null;
+  const maxTrucks = butane !== null ? Math.floor(butane / 190) : null;
+
+  const tankConfig = Object.values(terminalConfig.products)
+    .flatMap(p => p.tanks).find(t => t.id === blend.tankId);
+  const safeFill = tankConfig?.safeFill ?? 0;
+  const space = pump > 0 ? safeFill - pump - heel : null;
+  const warnHeadroom = space !== null && butane !== null && butane > space;
 
   const warnLowMargin = margin !== null && margin < 1.8 && margin >= 0;
   const warnNoPumpable = butane !== null && pumpable === '';
@@ -108,8 +113,18 @@ function BlendCalculator({ blend, terminalConfig }) {
       {row('Margin', margin !== null ? margin.toFixed(2) : '—', true, warnLowMargin ? C.amber : C.text)}
       <div style={{ borderTop: `1px solid ${C.border}`, margin: '8px 0' }} />
       {row('Butane needed', butane !== null ? `${Math.round(butane).toLocaleString()} bbl` : '—', true, butane ? C.amber : C.muted)}
-      {row('Trucks', (minTrucks !== null && maxTrucks !== null) ? `${minTrucks} min / ${maxTrucks} max` : '—', true)}
+      {row('Trucks', maxTrucks !== null ? `${maxTrucks}` : '—', true)}
+      {maxTrucks !== null && (
+        <div style={{ fontSize: '10px', color: C.muted, textAlign: 'right', marginBottom: '4px' }}>
+          Partial trucks not dispatched — remainder stages to TK03
+        </div>
+      )}
 
+      {warnHeadroom && (
+        <div style={{ fontSize: '10px', color: C.amber, marginTop: '4px' }}>
+          ⚠ Butane volume exceeds available headroom — confirm safe fill before scheduling
+        </div>
+      )}
       {warnLowMargin && (
         <div style={{ fontSize: '10px', color: C.amber, marginTop: '6px' }}>
           ⚠ Margin below minimum (1.8)
