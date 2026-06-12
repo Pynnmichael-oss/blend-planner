@@ -8,7 +8,7 @@
     "defaultDelay": 0
   },
   "gradeMap": {
-    "regular": ["4C", "4D", "75"],
+    "regular": ["4C", "4D"],
     "premium": ["3C", "3D"]
   },
   "products": {
