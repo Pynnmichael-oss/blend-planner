@@ -1,9 +1,13 @@
-// TODO: IT — credentials must move server-side before
-// production. Client-side service account key is prototype-only.
+// Credentials entered at runtime via paste — never bundled or
+// committed. TODO: IT — replace with backend auth endpoint.
 //
 // Uses browser-native SubtleCrypto for JWT signing; no npm packages needed.
 
 const SHEET_ID = '1siJmeWuFgVCOxK2acali-_wzY8QSJm20OLxJbP3-dfc';
+
+let _creds = null;
+export function setGoogleCredentials(creds) { _creds = creds; }
+export function hasGoogleCredentials() { return _creds !== null; }
 
 async function getAccessToken(clientEmail, privateKeyPem) {
   const now = Math.floor(Date.now() / 1000);
@@ -63,9 +67,10 @@ export async function savePlanToSheet({
   terminalConfig, openingInventory, blends,
   liftings, startDate, notes,
 }) {
+  if (!_creds) return { success: false, error: 'No credentials loaded' };
+
   try {
-    const creds = (await import('../config/google-credentials.json', { with: { type: 'json' } })).default;
-    const token   = await getAccessToken(creds.client_email, creds.private_key);
+    const token   = await getAccessToken(_creds.client_email, _creds.private_key);
     const savedAt = new Date().toISOString();
     const terminal = terminalConfig.name;
 
@@ -75,8 +80,8 @@ export async function savePlanToSheet({
       b.blendNumber, b.tankLabel,
       b.startDate, b.startTime, b.endDate, b.endTime,
       b.periods,
-      b.estPumpable  ?? '', b.estTOV       ?? '',
-      b.rvpActual    ?? '', b.rvpTarget    ?? '',
+      b.estPumpable  ?? '', b.estTOV    ?? '',
+      b.rvpActual    ?? '', b.rvpTarget ?? '',
       b.butane_bbls  != null ? Math.round(b.butane_bbls) : '',
       b.trucks       ?? '',
       b.blendedRVP   != null ? b.blendedRVP.toFixed(2) : '',
