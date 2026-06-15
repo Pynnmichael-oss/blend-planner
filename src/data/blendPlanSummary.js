@@ -23,6 +23,7 @@ function buildBlendRow(blendNumber, tankId, tankMeta, periods) {
   const last        = periods[periods.length - 1];
   const penultimate = periods.length > 1 ? periods[periods.length - 2] : null;
   const heel        = tankMeta?.heel ?? 0;
+  const bs          = last.blendSummary ?? null;
 
   return {
     blendNumber,
@@ -34,13 +35,16 @@ function buildBlendRow(blendNumber, tankId, tankMeta, periods) {
     endDate:      last.date,
     endTime:      SLOT_END[last.timeSlot],
     periods:      periods.length,
-    estPumpable:  null,   // O-2: pending operator input
+    estPumpable:  bs?.estPumpable  ?? null,
     heel,
-    estTOV:       null,   // O-2: pumpable + heel, pending
+    estTOV:       bs?.tov          ?? null,
+    rvpActual:    bs?.rvpActual    ?? null,
+    butane_bbls:  bs?.butane_bbls  ?? null,
+    trucks:       bs?.trucks       ?? null,
+    actualButane: bs?.actualButane ?? null,
+    blendedRVP:   bs?.blendedRVP   ?? null,
     minMargin:    1.8,
     maxMargin:    2.1,
-    minTrucks:    null,   // resolved once estTOV is set
-    maxTrucks:    null,
     truckStart:   `${first.date} ${SLOT_START[first.timeSlot]}`,
     // O-3: single-period blends have no truck finish
     truckFinish:  penultimate

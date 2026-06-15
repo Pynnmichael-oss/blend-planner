@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { detectBlends } from '../../data/blendPlanSummary';
 
 const C = {
@@ -48,6 +48,12 @@ function BlendCalculator({ blend, terminalConfig }) {
   const [pumpable,  setPumpable]  = useState('');
   const [rvpTarget, setRvpTarget] = useState('');
   const [rvpActual, setRvpActual] = useState('');
+
+  useEffect(() => {
+    if (blend.estPumpable) setPumpable(String(Math.round(blend.estPumpable)));
+    if (blend.rvpActual)   setRvpActual(String(blend.rvpActual.toFixed(2)));
+    setRvpTarget('8.75');
+  }, [blend.estPumpable, blend.rvpActual]);
 
   const pump = parseFloat(pumpable) || 0;
   const tgt  = parseFloat(rvpTarget);
@@ -193,7 +199,7 @@ export default function BlendPlanSummary({ grid, terminalConfig }) {
           <table style={{ borderCollapse: 'collapse', fontSize: '12px', width: '100%' }}>
             <thead>
               <tr>
-                {['#','Tank','Start','End','Est Pumpable','Est TOV','Margin','Min Trucks','Max Trucks','Truck Start','Truck Finish'].map(h => (
+                {['#','Tank','Start','End','Est Pumpable','Est TOV','Margin','Butane','Trucks','Blended RVP','Truck Start','Truck Finish'].map(h => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
@@ -205,20 +211,23 @@ export default function BlendPlanSummary({ grid, terminalConfig }) {
                   <td style={tdBase}>{b.tankLabel}</td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>{b.startDate} {b.startTime}</td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>{b.endDate} {b.endTime}</td>
-                  <td style={tdBase}>
-                    <span style={{ color: C.amber }} title="Pending operator input (O-2)">—</span>
+                  <td style={{ ...tdBase, fontFamily: 'monospace' }}>
+                    {b.estPumpable ? Math.round(b.estPumpable).toLocaleString() : <span style={{ color: C.muted }}>—</span>}
                   </td>
-                  <td style={tdBase}>
-                    <span style={{ color: C.amber }} title="Pending operator input (O-2)">—</span>
+                  <td style={{ ...tdBase, fontFamily: 'monospace' }}>
+                    {b.estTOV ? Math.round(b.estTOV).toLocaleString() : <span style={{ color: C.muted }}>—</span>}
                   </td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>
                     {b.minMargin} – {b.maxMargin}
                   </td>
-                  <td style={tdBase}>
-                    <span style={{ color: C.muted }} title="Set pumpable in calculator below">—</span>
+                  <td style={{ ...tdBase, fontFamily: 'monospace' }}>
+                    {b.butane_bbls ? Math.round(b.butane_bbls).toLocaleString() + ' bbl' : <span style={{ color: C.muted }}>—</span>}
                   </td>
-                  <td style={tdBase}>
-                    <span style={{ color: C.muted }} title="Set pumpable in calculator below">—</span>
+                  <td style={{ ...tdBase, fontFamily: 'monospace' }}>
+                    {b.trucks !== null ? b.trucks : <span style={{ color: C.muted }}>—</span>}
+                  </td>
+                  <td style={{ ...tdBase, fontFamily: 'monospace', color: C.blue }}>
+                    {b.blendedRVP ? b.blendedRVP.toFixed(2) : <span style={{ color: C.muted }}>—</span>}
                   </td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>{b.truckStart}</td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>

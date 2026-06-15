@@ -9,6 +9,9 @@ import { distributeReceipts } from './distributeReceipts';
 
 export const TIME_SLOTS = ["00-05", "06-11", "12-17", "18-23"];
 
+const BUTANE_RVP = 52;
+const TRUCK_BBLS = 190;
+
 // startDate anchors the grid — no longer derived from receipts.
 export function buildDateList(startDate, planDays) {
   const dates = [];
@@ -267,6 +270,8 @@ export function buildPlanGrid({
             spillVolume,
             spillWarning: spillVolume > 0,
             belowHeel,
+            heel: tank.heel,
+            safeFill: tank.safeFill,
             conflictMessage: hasConflict
               ? "Pipeline receipt blocked — tank is blending. Reallocate this batch."
               : undefined,
@@ -275,6 +280,65 @@ export function buildPlanGrid({
           lastPeriod[tank.id] = { closingInventory, closingRVP };
         }
       }
+    }
+  }
+
+  // Post-blend pass: apply butane lump sum to first period after each blend run ends
+  const byTank = {};
+  for (const entry of result) (byTank[entry.tankId] ??= []).push(entry);
+
+  const slotOrder = { "00-05": 0, "06-11": 1, "12-17": 2, "18-23": 3 };
+
+  for (const entries of Object.values(byTank)) {
+    entries.sort((a, b) => a.date !== b.date
+      ? a.date < b.date ? -1 : 1
+      : slotOrder[a.timeSlot] - slotOrder[b.timeSlot]);
+
+    for (let i = 0; i < entries.length - 1; i++) {
+      const curr = entries[i];
+      const next = entries[i + 1];
+
+      if (!curr.blendActive || next.blendActive) continue;
+
+      const pumpableBeforeButane = curr.closingInventory;
+      const heel = curr.heel ?? 0;
+      const tov  = pumpableBeforeButane + heel;
+
+      const rvpTarget = 8.75; // TODO: pull from terminalConfig.blendSpec
+      const rvpActual = curr.closingRVP;
+      const margin    = rvpTarget - rvpActual;
+
+      if (margin <= 0) continue;
+
+      const denominator = BUTANE_RVP - rvpTarget;
+      const butane_bbls = denominator > 0 ? (margin * tov) / denominator : 0;
+      const trucks       = Math.floor(butane_bbls / TRUCK_BBLS);
+      const actualButane = trucks * TRUCK_BBLS;
+
+      if (trucks === 0) continue;
+
+      const blendedRVP = ((rvpActual * tov) + (BUTANE_RVP * actualButane)) / (tov + actualButane);
+
+      next.openingInventory += actualButane;
+      next.closingInventory += actualButane;
+      next.openingRVP  = blendedRVP;
+      next.closingRVP  = blendedRVP;
+      next.fillPct     = next.closingInventory / (next.safeFill ?? 1);
+      next.space       = (next.safeFill ?? 0) - next.closingInventory;
+      next.postBlendButane = actualButane;
+      next.postBlendTrucks = trucks;
+      next.postBlendRVP    = blendedRVP;
+
+      curr.blendSummary = {
+        estPumpable: pumpableBeforeButane,
+        tov,
+        rvpActual,
+        rvpTarget,
+        butane_bbls,
+        trucks,
+        actualButane,
+        blendedRVP,
+      };
     }
   }
 
