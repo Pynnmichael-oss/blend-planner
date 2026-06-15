@@ -56,6 +56,7 @@ export function buildPlanGrid({
   const currentRackTank    = {}; // productKey → tankId
   const currentReceiptTank = {}; // productKey → tankId
   const lastRackedTank     = {}; // productKey → tankId
+  const batchReceiptTank   = {}; // batchCode → tankId
   const result = [];
 
   for (const date of dates) {
@@ -80,11 +81,32 @@ export function buildPlanGrid({
               const vol = receiptAllocations[`${receipt.batchCode}-${date}-${timeSlot}-${tank.id}`] ?? 0;
               if (vol > 0) (receiptAssignment[tank.id] ??= []).push({ volume: vol, rvp, batchCode });
             }
+            // Track which tank received this batch for future periods
+            const allocTank = product.tanks.find(t =>
+              (receiptAllocations[`${receipt.batchCode}-${date}-${timeSlot}-${t.id}`] ?? 0) > 0
+            );
+            if (allocTank) batchReceiptTank[receipt.batchCode] = allocTank.id;
           } else {
-            // Carry-forward receipt tank
+            // batch sticks to assigned tank for its full duration
+            // — rolls only if tank goes offline (blend/idle/full)
             let receiptTankId = currentReceiptTank[productKey];
 
-            // Validate: not blending, not manually idle, has space
+            // Batch-level override: if this batch was previously assigned,
+            // keep it on that tank unless it's blending, idle, or full
+            const batchTank = batchReceiptTank[receipt.batchCode];
+            if (batchTank) {
+              const batchTankConfig = product.tanks.find(t => t.id === batchTank);
+              const batchTankOk = batchTankConfig &&
+                !manualInputs[`${batchTank}-${date}-${timeSlot}`]?.blendActive &&
+                !manualInputs[`${batchTank}-${date}-${timeSlot}`]?.idle &&
+                (batchTankConfig.safeFill - (lastPeriod[batchTank]?.closingInventory ??
+                  openingMap[batchTank]?.pumpable ?? 0)) > 0;
+              if (batchTankOk) receiptTankId = batchTank;
+              // If batch tank is unavailable, fall through to carry-forward
+              // logic and batchReceiptTank will be updated below
+            }
+
+            // Validate carry-forward tank: not blending, not manually idle, has space
             const receiptValid = receiptTankId && product.tanks.some(t =>
               t.id === receiptTankId &&
               !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
@@ -118,6 +140,7 @@ export function buildPlanGrid({
                 }, null);
               }
             }
+            if (receiptTankId) batchReceiptTank[receipt.batchCode] = receiptTankId;
             if (receiptTankId) currentReceiptTank[productKey] = receiptTankId;
             if (receiptTankId) (receiptAssignment[receiptTankId] ??= []).push({ volume: sliceVol, rvp, batchCode });
           }
