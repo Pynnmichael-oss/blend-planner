@@ -220,7 +220,7 @@ export default function AppShell({
                 </button>
                 <div style={{ maxHeight: summaryOpen ? '4000px' : '0', overflow: 'hidden', transition: 'max-height 0.25s ease' }}>
                   <div style={{ padding: '0 18px 24px' }}>
-                    <BlendPlanSummary grid={grid} terminalConfig={terminalConfig} startDate={startDate} />
+                    <BlendPlanSummary grid={grid} terminalConfig={terminalConfig} startDate={startDate} openingInventory={openingInventory} liftings={liftings} />
                   </div>
                 </div>
               </div>
@@ -263,6 +263,7 @@ export default function AppShell({
               terminalConfig={terminalConfig}
               startDate={startDate}
               openingInventory={openingInventory}
+              liftings={liftings}
             />
           </div>
         )}

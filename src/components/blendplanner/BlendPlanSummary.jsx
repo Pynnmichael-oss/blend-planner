@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { detectBlends } from '../../data/blendPlanSummary';
+import SavePlanButton from '../shared/SavePlanButton';
 
 const C = {
   bg: '#0a0c12', panel: '#111827', panel2: '#0f1117',
@@ -159,7 +160,7 @@ function BlendCalculator({ blend, terminalConfig }) {
   );
 }
 
-export default function BlendPlanSummary({ grid, terminalConfig }) {
+export default function BlendPlanSummary({ grid, terminalConfig, openingInventory = [], liftings = [], startDate }) {
   const blends = detectBlends(grid, terminalConfig);
 
   const titleDateRange = blends.length
@@ -252,6 +253,17 @@ export default function BlendPlanSummary({ grid, terminalConfig }) {
             <BlendCalculator key={b.blendNumber} blend={b} terminalConfig={terminalConfig} />
           ))}
         </div>
+      </div>
+
+      {/* Section C — save to history */}
+      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '14px' }}>
+        <SavePlanButton
+          grid={grid}
+          terminalConfig={terminalConfig}
+          openingInventory={openingInventory}
+          liftings={liftings}
+          startDate={startDate}
+        />
       </div>
     </div>
   );
