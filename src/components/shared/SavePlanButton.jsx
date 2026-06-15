@@ -1,8 +1,8 @@
-// TODO: IT — move credentials to backend before production deployment
+// TODO: IT — credentials must move server-side before
+// production. Client-side service account key is prototype-only.
 
 import { useState } from 'react';
 import { savePlanToSheet } from '../../data/googleSheets';
-import { detectBlends } from '../../data/blendPlanSummary';
 
 const C = {
   bg: '#0a0c12', panel: '#111827', border: '#1e293b',
@@ -10,15 +10,17 @@ const C = {
   green: '#22c55e', red: '#ef4444',
 };
 
-export default function SavePlanButton({ grid, terminalConfig, openingInventory, liftings, startDate }) {
+export default function SavePlanButton({
+  blends, terminalConfig, openingInventory, liftings, startDate,
+}) {
   const [showModal, setShowModal] = useState(false);
   const [notes,     setNotes]     = useState('');
   const [status,    setStatus]    = useState(null); // null | 'saving' | 'ok' | 'error'
-  const [errorMsg,  setErrorMsg]  = useState('');
+  const [message,   setMessage]   = useState('');
 
   async function handleConfirm() {
     setStatus('saving');
-    const blends = detectBlends(grid, terminalConfig);
+    setMessage('');
     const result = await savePlanToSheet({
       terminalConfig, openingInventory, blends,
       liftings, startDate, notes,
@@ -26,14 +28,16 @@ export default function SavePlanButton({ grid, terminalConfig, openingInventory,
 
     if (result.success) {
       setStatus('ok');
+      setMessage(`✓ Saved — ${result.rowsAdded} blend rows added`);
       setTimeout(() => {
         setStatus(null);
+        setMessage('');
         setShowModal(false);
         setNotes('');
-      }, 3000);
+      }, 4000);
     } else {
       setStatus('error');
-      setErrorMsg(result.error ?? 'Unknown error');
+      setMessage(result.error ?? 'Unknown error');
     }
   }
 
@@ -41,8 +45,8 @@ export default function SavePlanButton({ grid, terminalConfig, openingInventory,
     if (status === 'saving') return;
     setShowModal(false);
     setStatus(null);
+    setMessage('');
     setNotes('');
-    setErrorMsg('');
   }
 
   return (
@@ -74,9 +78,6 @@ export default function SavePlanButton({ grid, terminalConfig, openingInventory,
             <div style={{ fontSize: '13px', fontWeight: 'bold', color: C.text }}>
               Save Plan to History
             </div>
-            <div style={{ fontSize: '11px', color: C.muted }}>
-              Saves blend runs and weekly snapshot to Google Sheets.
-            </div>
 
             <div>
               <div style={{ fontSize: '10px', color: C.muted, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -85,7 +86,7 @@ export default function SavePlanButton({ grid, terminalConfig, openingInventory,
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                placeholder="Any notes for this plan..."
+                placeholder="Notes for this week's plan..."
                 rows={3}
                 style={{
                   width: '100%', resize: 'vertical', fontSize: '12px',
@@ -97,15 +98,14 @@ export default function SavePlanButton({ grid, terminalConfig, openingInventory,
               />
             </div>
 
+            {status === 'saving' && (
+              <div style={{ fontSize: '12px', color: C.muted }}>Saving…</div>
+            )}
             {status === 'ok' && (
-              <div style={{ fontSize: '12px', color: C.green, fontWeight: 'bold' }}>
-                ✓ Saved
-              </div>
+              <div style={{ fontSize: '12px', color: C.green, fontWeight: 'bold' }}>{message}</div>
             )}
             {status === 'error' && (
-              <div style={{ fontSize: '11px', color: C.red }}>
-                ✗ {errorMsg}
-              </div>
+              <div style={{ fontSize: '11px', color: C.red }}>{message}</div>
             )}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
@@ -126,14 +126,13 @@ export default function SavePlanButton({ grid, terminalConfig, openingInventory,
                 disabled={status === 'saving' || status === 'ok'}
                 style={{
                   padding: '5px 14px', fontSize: '12px', fontWeight: 'bold',
-                  backgroundColor: status === 'ok' ? '#15803d' : C.green,
-                  color: '#000',
+                  backgroundColor: C.green, color: '#000',
                   border: 'none', borderRadius: '4px',
                   cursor: (status === 'saving' || status === 'ok') ? 'not-allowed' : 'pointer',
                   opacity: status === 'saving' ? 0.7 : 1,
                 }}
               >
-                {status === 'saving' ? 'Saving…' : status === 'ok' ? '✓ Saved' : 'Confirm Save'}
+                {status === 'saving' ? 'Saving…' : 'Confirm Save'}
               </button>
             </div>
           </div>

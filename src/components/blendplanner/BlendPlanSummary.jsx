@@ -258,7 +258,7 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
       {/* Section C — save to history */}
       <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '14px' }}>
         <SavePlanButton
-          grid={grid}
+          blends={blends}
           terminalConfig={terminalConfig}
           openingInventory={openingInventory}
           liftings={liftings}
