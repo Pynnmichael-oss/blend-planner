@@ -319,26 +319,36 @@ export function buildPlanGrid({
 
       const blendedRVP = ((rvpActual * tov) + (BUTANE_RVP * actualButane)) / (tov + actualButane);
 
-      next.openingInventory += actualButane;
-      next.closingInventory += actualButane;
-      next.openingRVP  = blendedRVP;
-      next.closingRVP  = blendedRVP;
-      next.fillPct     = next.closingInventory / (next.safeFill ?? 1);
-      next.space       = (next.safeFill ?? 0) - next.closingInventory;
-      next.postBlendButane = actualButane;
-      next.postBlendTrucks = trucks;
-      next.postBlendRVP    = blendedRVP;
+      const idx = result.indexOf(next);
+      if (idx !== -1) {
+        const updated = {
+          ...next,
+          openingInventory: next.openingInventory + actualButane,
+          closingInventory: next.closingInventory + actualButane,
+          openingRVP:  blendedRVP,
+          closingRVP:  blendedRVP,
+          fillPct:     (next.closingInventory + actualButane) / (next.safeFill ?? 1),
+          space:       (next.safeFill ?? 0) - (next.closingInventory + actualButane),
+          postBlendButane: actualButane,
+          postBlendTrucks: trucks,
+          postBlendRVP:    blendedRVP,
+        };
+        result[idx]     = updated;
+        entries[i + 1]  = updated;
+      }
 
-      curr.blendSummary = {
-        estPumpable: pumpableBeforeButane,
-        tov,
-        rvpActual,
-        rvpTarget,
-        butane_bbls,
-        trucks,
-        actualButane,
-        blendedRVP,
-      };
+      const currIdx = result.indexOf(curr);
+      if (currIdx !== -1) {
+        result[currIdx] = {
+          ...curr,
+          blendSummary: {
+            estPumpable: pumpableBeforeButane,
+            tov, rvpActual, rvpTarget,
+            butane_bbls, trucks, actualButane, blendedRVP,
+          },
+        };
+        entries[i] = result[currIdx];
+      }
     }
   }
 
