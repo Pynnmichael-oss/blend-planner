@@ -161,7 +161,9 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
               <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {entry.receipts.map((r, i) => (
                   <div key={i} style={{
-                    fontSize: '9px', fontFamily: 'monospace', color: '#475569',
+                    fontSize: '9px', fontFamily: 'monospace', color: '#f59e0b',
+                    backgroundColor: '#1c1500', border: '1px solid #3d2e00',
+                    borderRadius: '3px', padding: '1px 4px',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     maxWidth: '140px',
                   }}>
