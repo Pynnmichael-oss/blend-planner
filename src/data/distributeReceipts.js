@@ -34,7 +34,7 @@ export function distributeReceipts(receipts, date, timeSlot) {
     const overlapHours = (overlapEnd - overlapStart) / 3600_000;
     const volume = overlapHours * receipt.rate;
 
-    result.push({ volume, rvp: receipt.rvp });
+    result.push({ volume, rvp: receipt.rvp, batchCode: receipt.batchCode });
   }
 
   return result;

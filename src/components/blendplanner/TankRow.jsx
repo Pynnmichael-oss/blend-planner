@@ -69,7 +69,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
         if (!entry) {
           return (
             <td key={p.key} style={{
-              minWidth: '108px', backgroundColor: C.bg,
+              minWidth: '160px', backgroundColor: C.bg,
               borderBottom: `0.5px solid ${C.border}`,
               borderRight: daySep ? `1px solid ${C.borderDay}` : `0.5px solid ${C.border}`,
             }} />
@@ -92,7 +92,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             key={p.key}
             onClick={() => onCellClick(entry)}
             style={{
-              minWidth: '108px', padding: '6px 8px', verticalAlign: 'top',
+              minWidth: '160px', padding: '8px 10px', verticalAlign: 'top',
               cursor: 'pointer', backgroundColor: cellBg,
               borderBottom: `0.5px solid ${C.border}`,
               borderRight: daySep ? `1px solid ${C.borderDay}` : `0.5px solid ${C.border}`,
@@ -143,7 +143,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
 
             {/* Vertical gauge */}
             <div style={{ marginBottom: '5px' }}>
-              <VerticalTankGauge fillPct={entry.fillPct} status={status} height={48} width={16} />
+              <VerticalTankGauge fillPct={entry.fillPct} status={status} height={56} width={16} />
             </div>
 
             {/* Closing inventory */}
@@ -155,6 +155,21 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             <div className="font-mono" style={{ fontSize: '10px', color: C.blue, lineHeight: 1.3 }}>
               RVP {entry.closingRVP.toFixed(2)}
             </div>
+
+            {/* Batch codes */}
+            {entry.receipts.length > 0 && (
+              <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                {entry.receipts.map((r, i) => (
+                  <div key={i} style={{
+                    fontSize: '9px', fontFamily: 'monospace', color: '#475569',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    maxWidth: '140px',
+                  }}>
+                    {r.batchCode ?? '—'}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Sub-labels */}
             {status === 'BLEND' && (

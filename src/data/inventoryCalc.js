@@ -61,12 +61,12 @@ export function buildPlanGrid({
 
         // ── Receipt assignment for this product/period ─────────────────
         // TODO: default allocation — refine per Kelly
-        const receiptAssignment = {}; // tankId → [{ volume, rvp }]
+        const receiptAssignment = {}; // tankId → [{ volume, rvp, batchCode }]
 
         for (const receipt of receipts.filter(r => r.product === productKey)) {
           const slices = distributeReceipts([receipt], date, timeSlot);
           if (!slices.length) continue;
-          const { volume: sliceVol, rvp } = slices[0];
+          const { volume: sliceVol, rvp, batchCode } = slices[0];
 
           const hasAlloc = product.tanks.some(
             t => receiptAllocations[`${receipt.batchCode}-${date}-${timeSlot}-${t.id}`] !== undefined
@@ -75,7 +75,7 @@ export function buildPlanGrid({
           if (hasAlloc) {
             for (const tank of product.tanks) {
               const vol = receiptAllocations[`${receipt.batchCode}-${date}-${timeSlot}-${tank.id}`] ?? 0;
-              if (vol > 0) (receiptAssignment[tank.id] ??= []).push({ volume: vol, rvp });
+              if (vol > 0) (receiptAssignment[tank.id] ??= []).push({ volume: vol, rvp, batchCode });
             }
           } else {
             // Carry-forward receipt tank
@@ -116,7 +116,7 @@ export function buildPlanGrid({
               }
             }
             if (receiptTankId) currentReceiptTank[productKey] = receiptTankId;
-            if (receiptTankId) (receiptAssignment[receiptTankId] ??= []).push({ volume: sliceVol, rvp });
+            if (receiptTankId) (receiptAssignment[receiptTankId] ??= []).push({ volume: sliceVol, rvp, batchCode });
           }
         }
 
