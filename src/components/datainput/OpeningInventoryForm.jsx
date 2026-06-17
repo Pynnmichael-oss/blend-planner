@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import VerticalTankGauge from '../blendplanner/InventoryBar';
 
 const C = {
@@ -7,6 +8,7 @@ const C = {
   muted:  '#64748b',
   amber:  '#f59e0b',
   blue:   '#60a5fa',
+  red:    '#ef4444',
 };
 
 const inputBase = {
@@ -16,7 +18,11 @@ const inputBase = {
   textAlign: 'right',
 };
 
-export default function OpeningInventoryForm({ openingInventory, terminalConfig, setOpeningInventory }) {
+export default function OpeningInventoryForm({ openingInventory, terminalConfig, setOpeningInventory, specCeiling, setSpecCeiling, blendTarget, setBlendTarget }) {
+  useEffect(() => {
+    setBlendTarget(+(specCeiling - 0.25).toFixed(2));
+  }, [specCeiling]);
+
   function handleChange(tankId, field, raw) {
     const value = field === 'pumpable'
       ? Math.round(parseFloat(raw) || 0)
@@ -24,7 +30,14 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
     setOpeningInventory(openingInventory.map(t => t.tankId === tankId ? { ...t, [field]: value } : t));
   }
 
+  const specInputBase = {
+    ...inputBase,
+    width: '56px',
+    border: `1px solid ${C.border}`,
+  };
+
   return (
+    <>
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
       <thead>
         <tr style={{ color: C.muted }}>
@@ -88,5 +101,38 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
         ))}
       </tbody>
     </table>
+
+    {/* Blend spec controls */}
+    <div style={{ borderTop: `1px solid ${C.border}`, marginTop: '10px', paddingTop: '10px' }}>
+      <div style={{ fontSize: '9px', color: C.amber, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+        Blend Spec
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', color: C.muted }}>Ceiling</span>
+          <input
+            type="number" step="0.05" min="8.0" max="15.0"
+            value={specCeiling}
+            onChange={e => setSpecCeiling(parseFloat(e.target.value) || 9.0)}
+            className="font-mono"
+            style={{ ...specInputBase, color: C.red }}
+          />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', color: C.muted }}>Target</span>
+          <input
+            type="number" step="0.05" min="7.0"
+            value={blendTarget}
+            onChange={e => setBlendTarget(parseFloat(e.target.value) || 8.75)}
+            className="font-mono"
+            style={{ ...specInputBase, color: C.blue }}
+          />
+        </div>
+      </div>
+      <div style={{ fontSize: '10px', color: C.muted, marginTop: '6px' }}>
+        Target auto-set 0.25 below ceiling
+      </div>
+    </div>
+    </>
   );
 }

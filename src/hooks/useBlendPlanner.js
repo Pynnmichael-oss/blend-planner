@@ -36,6 +36,8 @@ export default function useBlendPlanner() {
   const [rvpConfirmed,   setRvpConfirmed]   = useState({});
   // null = show all slots; when set, hides slots before this value on the first day only
   const [startSlot, setStartSlot] = useState(null);
+  const [specCeiling, setSpecCeiling] = useState(9.0);
+  const [blendTarget, setBlendTarget] = useState(8.75);
 
   const terminalConfig = TERMINAL_CONFIGS[terminalId];
 
@@ -100,5 +102,7 @@ export default function useBlendPlanner() {
     rvpValues, setRvpValues,
     rvpConfirmed, setRvpConfirmed,
     startSlot, setStartSlot,
+    specCeiling, setSpecCeiling,
+    blendTarget, setBlendTarget,
   };
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// specCeiling and blendTarget are lifted to useBlendPlanner — received as props
 import { detectBlends } from '../../data/blendPlanSummary';
 import SavePlanButton from '../shared/SavePlanButton';
 
@@ -194,15 +195,8 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
   );
 }
 
-export default function BlendPlanSummary({ grid, terminalConfig, openingInventory = [], liftings = [], startDate }) {
+export default function BlendPlanSummary({ grid, terminalConfig, openingInventory = [], liftings = [], startDate, specCeiling, blendTarget }) {
   const blends = detectBlends(grid, terminalConfig);
-
-  const [specCeiling, setSpecCeiling] = useState(9.0);
-  const [blendTarget, setBlendTarget] = useState(8.75);
-
-  useEffect(() => {
-    setBlendTarget(+(specCeiling - 0.25).toFixed(2));
-  }, [specCeiling]);
 
   const titleDateRange = blends.length
     ? (() => {
@@ -225,43 +219,8 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
   const thStyle = { padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'left', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' };
   const tdBase  = { padding: '5px 8px', fontSize: '12px', color: C.text, borderBottom: `0.5px solid ${C.border}`, whiteSpace: 'nowrap' };
 
-  const inputStyle = {
-    width: '64px', textAlign: 'right', fontSize: '11px', fontFamily: 'monospace',
-    backgroundColor: C.bg, color: C.blue, border: `1px solid ${C.amber}`,
-    borderRadius: '3px', padding: '2px 4px', outline: 'none',
-  };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-      {/* Spec controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '10px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-            Spec Ceiling
-          </span>
-          <input
-            type="number" step="0.05" min="8.0" max="15.0"
-            value={specCeiling}
-            onChange={e => setSpecCeiling(parseFloat(e.target.value) || 9.0)}
-            className="font-mono"
-            style={inputStyle}
-          />
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '10px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-            Blend Target
-          </span>
-          <input
-            type="number" step="0.05" min="7.0"
-            value={blendTarget}
-            onChange={e => setBlendTarget(parseFloat(e.target.value) || 8.75)}
-            className="font-mono"
-            style={inputStyle}
-          />
-        </div>
-        <span style={{ fontSize: '10px', color: C.muted }}>Target is ~0.25 below ceiling</span>
-      </div>
 
       {/* Section A — summary table */}
       <div>

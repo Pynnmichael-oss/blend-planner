@@ -66,6 +66,8 @@ export default function AppShell({
   rvpValues, setRvpValues,
   rvpConfirmed, setRvpConfirmed,
   startSlot, setStartSlot,
+  specCeiling, setSpecCeiling,
+  blendTarget, setBlendTarget,
 }) {
   const [activeTab,  setActiveTab]  = useState('PLAN');
   const [open,       setOpen]       = useState({ inventory: true });
@@ -203,6 +205,10 @@ export default function AppShell({
                   openingInventory={openingInventory}
                   terminalConfig={terminalConfig}
                   setOpeningInventory={setOpeningInventory}
+                  specCeiling={specCeiling}
+                  setSpecCeiling={setSpecCeiling}
+                  blendTarget={blendTarget}
+                  setBlendTarget={setBlendTarget}
                 />
               </SidebarSection>
 
@@ -244,7 +250,11 @@ export default function AppShell({
                 </button>
                 <div style={{ maxHeight: summaryOpen ? '4000px' : '0', overflow: 'hidden', transition: 'max-height 0.25s ease' }}>
                   <div style={{ padding: '0 18px 24px' }}>
-                    <BlendPlanSummary grid={grid} terminalConfig={terminalConfig} startDate={startDate} openingInventory={openingInventory} liftings={liftings} />
+                    <BlendPlanSummary
+                      grid={grid} terminalConfig={terminalConfig}
+                      startDate={startDate} openingInventory={openingInventory} liftings={liftings}
+                      specCeiling={specCeiling} blendTarget={blendTarget}
+                    />
                   </div>
                 </div>
               </div>
@@ -288,6 +298,8 @@ export default function AppShell({
               startDate={startDate}
               openingInventory={openingInventory}
               liftings={liftings}
+              specCeiling={specCeiling}
+              blendTarget={blendTarget}
             />
           </div>
         )}
