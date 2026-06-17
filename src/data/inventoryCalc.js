@@ -174,10 +174,16 @@ export function buildPlanGrid({
                   openingMap[t.id]?.pumpable ?? 0)) > 0
               );
               if (nonRackPool.length > 0) {
+                // receipt goes to highest-space non-rack tank
+                // lowest-volume was sending receipts to TK03 (swing tank)
+                // when TK56 had more room
                 receiptTankId = nonRackPool.reduce((bestId, t) => {
-                  const vol    = lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0;
-                  const bestVol = lastPeriod[bestId]?.closingInventory ?? openingMap[bestId]?.pumpable ?? 0;
-                  return vol < bestVol ? t.id : bestId;
+                  const space = (t.safeFill - t.heel) -
+                    (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0);
+                  const bestSpace = (product.tanks.find(t2 => t2.id === bestId)?.safeFill ?? 0) -
+                    (product.tanks.find(t2 => t2.id === bestId)?.heel ?? 0) -
+                    (lastPeriod[bestId]?.closingInventory ?? openingMap[bestId]?.pumpable ?? 0);
+                  return space > bestSpace ? t.id : bestId;
                 }, nonRackPool[0].id);
               }
               // If nonRackPool is empty, fall through — rack tank receives as last resort (RACK+RCV status)
