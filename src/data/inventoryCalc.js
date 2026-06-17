@@ -157,6 +157,26 @@ export function buildPlanGrid({
                 }, null);
               }
             }
+            // receipt defers to lowest-volume non-rack tank — per operator spec
+            const rackTankForProduct = currentRackTank[productKey];
+            if (receiptTankId === rackTankForProduct) {
+              const nonRackPool = product.tanks.filter(t =>
+                t.id !== rackTankForProduct &&
+                !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
+                !manualInputs[`${t.id}-${date}-${timeSlot}`]?.idle &&
+                (t.safeFill - (lastPeriod[t.id]?.closingInventory ??
+                  openingMap[t.id]?.pumpable ?? 0)) > 0
+              );
+              if (nonRackPool.length > 0) {
+                receiptTankId = nonRackPool.reduce((bestId, t) => {
+                  const vol    = lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0;
+                  const bestVol = lastPeriod[bestId]?.closingInventory ?? openingMap[bestId]?.pumpable ?? 0;
+                  return vol < bestVol ? t.id : bestId;
+                }, nonRackPool[0].id);
+              }
+              // If nonRackPool is empty, fall through — rack tank receives as last resort (RACK+RCV status)
+            }
+
             if (receiptTankId) batchReceiptTank[receipt.batchCode] = receiptTankId;
             if (receiptTankId) currentReceiptTank[productKey] = receiptTankId;
             if (receiptTankId) (receiptAssignment[receiptTankId] ??= []).push({ volume: sliceVol, rvp, batchCode });
@@ -281,7 +301,9 @@ export function buildPlanGrid({
           else {
             const onRack    = isRackTank && totalLifting !== 0;
             const onReceipt = cappedReceipts > 0;
-            if      (onRack && onReceipt) status = "RACK+RCV";
+            if      (onRack && onReceipt) status = "CONFLICT";
+            // Rack and receipt on same tank is now a conflict,
+            // should only occur when no other tank is available
             else if (onRack)              status = "RACK";
             else if (onReceipt)           status = "RECEIPT";
             else                          status = "IDLE";
@@ -371,6 +393,14 @@ export function buildPlanGrid({
         };
         result[idx]     = updated;
         entries[i + 1]  = updated;
+
+        // post-blend: blended tank takes rack immediately — highest RVP product now ready to ship
+        const productKeyForTank = Object.entries(terminalConfig.products)
+          .find(([, p]) => p.tanks.some(t => t.id === curr.tankId))?.[0];
+        if (productKeyForTank) {
+          currentRackTank[productKeyForTank] = curr.tankId;
+          lastRackedTank[productKeyForTank]  = curr.tankId;
+        }
       }
 
       const currIdx = result.indexOf(curr);
