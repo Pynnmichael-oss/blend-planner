@@ -121,7 +121,8 @@ export function buildPlanGrid({
               const batchTankOk = batchTankConfig &&
                 !manualInputs[`${batchTank}-${date}-${timeSlot}`]?.blendActive &&
                 !manualInputs[`${batchTank}-${date}-${timeSlot}`]?.idle &&
-                (batchTankConfig.safeFill - (lastPeriod[batchTank]?.closingInventory ??
+                (batchTankConfig.safeFill - batchTankConfig.heel -
+                  (lastPeriod[batchTank]?.closingInventory ??
                   openingMap[batchTank]?.pumpable ?? 0)) > 0;
               if (batchTankOk) receiptTankId = batchTank;
               // If batch tank is unavailable, fall through to carry-forward
@@ -169,7 +170,7 @@ export function buildPlanGrid({
                 t.id !== rackTankForProduct &&
                 !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
                 !manualInputs[`${t.id}-${date}-${timeSlot}`]?.idle &&
-                (t.safeFill - (lastPeriod[t.id]?.closingInventory ??
+                (t.safeFill - t.heel - (lastPeriod[t.id]?.closingInventory ??
                   openingMap[t.id]?.pumpable ?? 0)) > 0
               );
               if (nonRackPool.length > 0) {
