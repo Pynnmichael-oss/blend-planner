@@ -74,7 +74,7 @@ export function buildPlanGrid({
         for (const [, product] of Object.entries(terminalConfig.products)) {
           for (const tank of product.tanks) {
             lastPeriod[tank.id] = {
-              closingInventory: Math.max((openingMap[tank.id]?.pumpable ?? 0) - tank.heel, 0),
+              closingInventory: openingMap[tank.id]?.pumpable ?? 0,
               closingRVP: openingMap[tank.id]?.rvp ?? 0,
             };
           }
