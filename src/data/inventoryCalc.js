@@ -38,6 +38,10 @@ export function buildPlanGrid({
   rackTankAssignments = {},
   startSlot = null,
 }) {
+  // Inventory tracked as pumpable barrels above heel throughout.
+  // heel is added back only for TOV in blend calculations.
+  // Display: 0 = at heel, safeFill-heel = full pumpable capacity.
+
   const dates = buildDateList(startDate, planDays);
   const openingMap = Object.fromEntries(openingInventory.map(t => [t.tankId, t]));
 
@@ -55,7 +59,7 @@ export function buildPlanGrid({
     productPeriodLiftings[key] = (productPeriodLiftings[key] ?? 0) + l.volume;
   }
 
-  const lastPeriod = {}; // tankId → { closingInventory, closingRVP }
+  const lastPeriod = {}; // tankId → { closingInventory (pumpable above heel), closingRVP, blendActive }
   const currentRackTank    = {}; // productKey → tankId
   const currentReceiptTank = {}; // productKey → tankId
   const lastRackedTank     = {}; // productKey → tankId
@@ -70,7 +74,7 @@ export function buildPlanGrid({
         for (const [, product] of Object.entries(terminalConfig.products)) {
           for (const tank of product.tanks) {
             lastPeriod[tank.id] = {
-              closingInventory: openingMap[tank.id]?.pumpable ?? 0,
+              closingInventory: Math.max((openingMap[tank.id]?.pumpable ?? 0) - tank.heel, 0),
               closingRVP: openingMap[tank.id]?.rvp ?? 0,
             };
           }
@@ -216,8 +220,7 @@ export function buildPlanGrid({
           const currentStillValid = current && product.tanks.some(t =>
             t.id === current &&
             !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
-            (lastPeriod[current]?.closingInventory ?? openingMap[current]?.pumpable ?? 0) >
-              (product.tanks.find(t => t.id === current)?.heel ?? 0)
+            (lastPeriod[current]?.closingInventory ?? openingMap[current]?.pumpable ?? 0) > 0
           );
 
           if (currentStillValid) {
@@ -227,8 +230,7 @@ export function buildPlanGrid({
             // raw product stays) — per blend spec
             const nonBlending = product.tanks.filter(t =>
               !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
-              (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0) >
-                (t.heel ?? 0)
+              (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0) > 0
             );
             const pool = nonBlending.length ? nonBlending : product.tanks;
             primaryRackId = pool.reduce((bestId, tank) => {
@@ -258,8 +260,11 @@ export function buildPlanGrid({
           const manualKey    = `${tank.id}-${date}-${timeSlot}`;
           const manual       = manualInputs[manualKey] ?? {};
           const prev         = lastPeriod[tank.id];
-          const opening      = prev ? prev.closingInventory : (openingMap[tank.id]?.pumpable ?? 0);
-          const openingRVP   = prev ? prev.closingRVP       : (openingMap[tank.id]?.rvp      ?? 0);
+          // First period: convert openingMap.pumpable (TOV) to pumpable above heel
+          const opening    = prev
+            ? prev.closingInventory
+            : Math.max((openingMap[tank.id]?.pumpable ?? 0) - tank.heel, 0);
+          const openingRVP = prev ? prev.closingRVP : (openingMap[tank.id]?.rvp ?? 0);
           const tankReceipts = receiptAssignment[tank.id] ?? [];
           const blendActive  = manual.blendActive ?? false;
 
@@ -296,7 +301,8 @@ export function buildPlanGrid({
           }
 
           const closingInventory = opening + cappedReceipts + rackLoadings;
-          const effectiveClosing = Math.max(closingInventory, tank.heel);
+          const pumpableClosing  = Math.max(closingInventory - tank.heel, 0);
+          // pumpableClosing is barrels above heel — 0 means at heel
 
           const closingRVP = calcClosingRVP({
             openingRVP,
@@ -305,15 +311,16 @@ export function buildPlanGrid({
             receipts: cappedTankReceipts,
           });
 
-          const fillPct = effectiveClosing / tank.safeFill;
-          const space   = tank.safeFill - effectiveClosing;
+          const pumpableMax = tank.safeFill - tank.heel;
+          const fillPct = pumpableMax > 0 ? pumpableClosing / pumpableMax : 0;
+          const space   = pumpableMax - pumpableClosing;
 
           // Status — derived only, never manually set
           let status;
-          if      (isManualIdle)                        status = "IDLE";
-          else if (effectiveClosing > tank.safeFill)    status = "OVERFILL";
-          else if (hasConflict)                         status = "CONFLICT";
-          else if (blendActive)                         status = "BLEND";
+          if      (isManualIdle)                      status = "IDLE";
+          else if (pumpableClosing >= pumpableMax)    status = "OVERFILL";
+          else if (hasConflict)                       status = "CONFLICT";
+          else if (blendActive)                       status = "BLEND";
           else {
             const onRack    = isRackTank && totalLifting !== 0;
             const onReceipt = cappedReceipts > 0;
@@ -335,8 +342,8 @@ export function buildPlanGrid({
             receipts: tankReceipts,
             rackLoadings,
             blendActive,
-            closingInventory: effectiveClosing,
-            rawClosingInventory: closingInventory,
+            closingInventory: pumpableClosing,
+            closingTOV: pumpableClosing + tank.heel,
             closingRVP,
             fillPct,
             space,
@@ -353,7 +360,7 @@ export function buildPlanGrid({
               : undefined,
           });
 
-          lastPeriod[tank.id] = { closingInventory: effectiveClosing, closingRVP, blendActive };
+          lastPeriod[tank.id] = { closingInventory: pumpableClosing, closingRVP, blendActive };
         }
       }
     }
@@ -374,9 +381,8 @@ export function buildPlanGrid({
 
       if (!curr.blendActive || next.blendActive) continue;
 
+      const tov  = curr.closingTOV ?? (curr.closingInventory + (curr.heel ?? 0));
       const pumpableBeforeButane = curr.closingInventory;
-      const heel = curr.heel ?? 0;
-      const tov  = pumpableBeforeButane + heel;
 
       const rvpTarget = 8.75; // TODO: pull from terminalConfig.blendSpec
       const rvpActual = curr.closingRVP;
@@ -395,14 +401,15 @@ export function buildPlanGrid({
 
       const idx = result.indexOf(next);
       if (idx !== -1) {
+        const nextPumpableMax = (next.safeFill ?? 0) - (next.heel ?? 0);
         const updated = {
           ...next,
           openingInventory: next.openingInventory + actualButane,
           closingInventory: next.closingInventory + actualButane,
           openingRVP:  blendedRVP,
           closingRVP:  blendedRVP,
-          fillPct:     (next.closingInventory + actualButane) / (next.safeFill ?? 1),
-          space:       (next.safeFill ?? 0) - (next.closingInventory + actualButane),
+          fillPct:     nextPumpableMax > 0 ? (next.closingInventory + actualButane) / nextPumpableMax : 0,
+          space:       nextPumpableMax - (next.closingInventory + actualButane),
           postBlendButane: actualButane,
           postBlendTrucks: trucks,
           postBlendRVP:    blendedRVP,
