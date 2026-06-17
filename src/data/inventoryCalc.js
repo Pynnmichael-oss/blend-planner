@@ -302,9 +302,8 @@ export function buildPlanGrid({
             if (nextTank) (receiptAssignment[nextTank.id] ??= []).push({ volume: spillVolume, rvp: spillRvp });
           }
 
-          const closingInventory = opening + cappedReceipts + rackLoadings;
-          const pumpableClosing  = Math.max(closingInventory - tank.heel, 0);
-          // pumpableClosing is barrels above heel — 0 means at heel
+          const pumpableClosing = Math.max(opening + cappedReceipts + rackLoadings, 0);
+          // opening is already pumpable above heel — no further heel subtraction needed
 
           const closingRVP = calcClosingRVP({
             openingRVP,
