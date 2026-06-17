@@ -43,8 +43,7 @@ function buildBlendRow(blendNumber, tankId, tankMeta, periods) {
     trucks:       bs?.trucks       ?? null,
     actualButane: bs?.actualButane ?? null,
     blendedRVP:   bs?.blendedRVP   ?? null,
-    minMargin:    1.8,
-    maxMargin:    2.1,
+    margin:       null,
     truckStart:   `${first.date} ${SLOT_START[first.timeSlot]}`,
     // O-3: single-period blends have no truck finish
     truckFinish:  penultimate

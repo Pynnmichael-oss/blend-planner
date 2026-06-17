@@ -42,7 +42,7 @@ function td(children, mono = false, style = {}) {
 }
 
 // Per-blend butane calculator local state
-function BlendCalculator({ blend, terminalConfig }) {
+function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
   const tank = Object.values(terminalConfig.products)
     .flatMap(p => p.tanks).find(t => t.id === blend.tankId);
 
@@ -53,8 +53,8 @@ function BlendCalculator({ blend, terminalConfig }) {
   useEffect(() => {
     if (blend.estPumpable) setPumpable(String(Math.round(blend.estPumpable)));
     if (blend.rvpActual)   setRvpActual(String(blend.rvpActual.toFixed(2)));
-    setRvpTarget('8.75');
-  }, [blend.estPumpable, blend.rvpActual]);
+    setRvpTarget(String(blendTarget));
+  }, [blend.estPumpable, blend.rvpActual, blendTarget, specCeiling]);
 
   const pump = parseFloat(pumpable) || 0;
   const tgt  = parseFloat(rvpTarget);
@@ -72,9 +72,15 @@ function BlendCalculator({ blend, terminalConfig }) {
   const safeFill = tankConfig?.safeFill ?? 0;
   const space = pump > 0 ? safeFill - pump - heel : null;
   const warnHeadroom = space !== null && butane !== null && butane > space;
-
-  const warnLowMargin = margin !== null && margin < 1.8 && margin >= 0;
   const warnNoPumpable = butane !== null && pumpable === '';
+
+  const warnCeilingActual = !isNaN(act) && act >= specCeiling;
+  const warnCeilingTarget = !isNaN(tgt) && tgt > specCeiling;
+
+  const marginColor = margin === null ? C.muted
+    : Math.abs(margin) <= 0.1 ? C.amber
+    : margin > 0 ? C.green
+    : C.red;
 
   const row = (label, value, mono = true, color = C.text) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
@@ -99,6 +105,10 @@ function BlendCalculator({ blend, terminalConfig }) {
     </div>
   );
 
+  const marginValue = margin !== null
+    ? `${margin.toFixed(2)}  (${(margin - 0.1).toFixed(2)} – ${(margin + 0.1).toFixed(2)})`
+    : '—';
+
   return (
     <div style={{
       backgroundColor: C.bg, border: `1px solid ${C.border}`,
@@ -115,10 +125,39 @@ function BlendCalculator({ blend, terminalConfig }) {
       {row('Heel', heel.toLocaleString())}
       {row('TOV', tov ? tov.toLocaleString() : '—', true, tov ? C.text : C.muted)}
       <div style={{ borderTop: `1px solid ${C.border}`, margin: '8px 0' }} />
-      {inputRow('RVP Target', rvpTarget, setRvpTarget, C.blue)}
+
+      {/* RVP Target row with ceiling breach warning */}
+      <div style={{ marginBottom: '4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', color: C.muted }}>RVP Target</span>
+          <input
+            type="number" step="0.1" value={rvpTarget}
+            onChange={e => setRvpTarget(e.target.value)}
+            className="font-mono"
+            style={{
+              width: '72px', textAlign: 'right', fontSize: '11px',
+              backgroundColor: C.bg, color: C.blue, border: `1px solid ${C.border}`,
+              borderRadius: '3px', padding: '2px 4px',
+            }}
+          />
+        </div>
+        {warnCeilingTarget && (
+          <div style={{ fontSize: '10px', color: C.red, marginTop: '2px', textAlign: 'right' }}>
+            ⚠ Target exceeds spec ceiling
+          </div>
+        )}
+      </div>
+
       {inputRow('RVP Actual', rvpActual, setRvpActual, C.blue)}
-      {row('Margin', margin !== null ? margin.toFixed(2) : '—', true, warnLowMargin ? C.amber : C.text)}
+      {row('RVP Margin', marginValue, true, marginColor)}
       <div style={{ borderTop: `1px solid ${C.border}`, margin: '8px 0' }} />
+
+      {warnCeilingActual && (
+        <div style={{ fontSize: '10px', color: C.red, marginBottom: '6px' }}>
+          ⚠ RVP at or above spec ceiling — do not blend
+        </div>
+      )}
+
       {row('Butane needed', butane !== null ? `${Math.round(butane).toLocaleString()} bbl` : '—', true, butane ? C.amber : C.muted)}
       {row('Trucks', maxTrucks !== null ? `${maxTrucks}` : '—', true)}
       {maxTrucks !== null && (
@@ -130,11 +169,6 @@ function BlendCalculator({ blend, terminalConfig }) {
       {warnHeadroom && (
         <div style={{ fontSize: '10px', color: C.amber, marginTop: '4px' }}>
           ⚠ Butane volume exceeds available headroom — confirm safe fill before scheduling
-        </div>
-      )}
-      {warnLowMargin && (
-        <div style={{ fontSize: '10px', color: C.amber, marginTop: '6px' }}>
-          ⚠ Margin below minimum (1.8)
         </div>
       )}
       {warnNoPumpable && (
@@ -163,6 +197,13 @@ function BlendCalculator({ blend, terminalConfig }) {
 export default function BlendPlanSummary({ grid, terminalConfig, openingInventory = [], liftings = [], startDate }) {
   const blends = detectBlends(grid, terminalConfig);
 
+  const [specCeiling, setSpecCeiling] = useState(9.0);
+  const [blendTarget, setBlendTarget] = useState(8.75);
+
+  useEffect(() => {
+    setBlendTarget(+(specCeiling - 0.25).toFixed(2));
+  }, [specCeiling]);
+
   const titleDateRange = blends.length
     ? (() => {
         const earliest = blends[0].startDate;
@@ -184,8 +225,43 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
   const thStyle = { padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'left', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' };
   const tdBase  = { padding: '5px 8px', fontSize: '12px', color: C.text, borderBottom: `0.5px solid ${C.border}`, whiteSpace: 'nowrap' };
 
+  const inputStyle = {
+    width: '64px', textAlign: 'right', fontSize: '11px', fontFamily: 'monospace',
+    backgroundColor: C.bg, color: C.blue, border: `1px solid ${C.amber}`,
+    borderRadius: '3px', padding: '2px 4px', outline: 'none',
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* Spec controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '10px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+            Spec Ceiling
+          </span>
+          <input
+            type="number" step="0.05" min="8.0" max="15.0"
+            value={specCeiling}
+            onChange={e => setSpecCeiling(parseFloat(e.target.value) || 9.0)}
+            className="font-mono"
+            style={inputStyle}
+          />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '10px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+            Blend Target
+          </span>
+          <input
+            type="number" step="0.05" min="7.0"
+            value={blendTarget}
+            onChange={e => setBlendTarget(parseFloat(e.target.value) || 8.75)}
+            className="font-mono"
+            style={inputStyle}
+          />
+        </div>
+        <span style={{ fontSize: '10px', color: C.muted }}>Target is ~0.25 below ceiling</span>
+      </div>
 
       {/* Section A — summary table */}
       <div>
@@ -200,7 +276,7 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
           <table style={{ borderCollapse: 'collapse', fontSize: '12px', width: '100%' }}>
             <thead>
               <tr>
-                {['#','Tank','Start','End','Est Pumpable','Est TOV','Margin','Butane','Trucks','Blended RVP','Truck Start','Truck Finish'].map(h => (
+                {['#','Tank','Start','End','Est Pumpable','Est TOV','Butane','Trucks','Blended RVP','Truck Start','Truck Finish'].map(h => (
                   <th key={h} style={thStyle}>{h}</th>
                 ))}
               </tr>
@@ -217,9 +293,6 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
                   </td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>
                     {b.estTOV ? Math.round(b.estTOV).toLocaleString() : <span style={{ color: C.muted }}>—</span>}
-                  </td>
-                  <td style={{ ...tdBase, fontFamily: 'monospace' }}>
-                    {b.minMargin} – {b.maxMargin}
                   </td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>
                     {b.butane_bbls ? Math.round(b.butane_bbls).toLocaleString() + ' bbl' : <span style={{ color: C.muted }}>—</span>}
@@ -250,7 +323,13 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
           {blends.map(b => (
-            <BlendCalculator key={b.blendNumber} blend={b} terminalConfig={terminalConfig} />
+            <BlendCalculator
+              key={b.blendNumber}
+              blend={b}
+              terminalConfig={terminalConfig}
+              specCeiling={specCeiling}
+              blendTarget={blendTarget}
+            />
           ))}
         </div>
       </div>
