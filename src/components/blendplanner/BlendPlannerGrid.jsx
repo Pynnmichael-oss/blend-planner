@@ -67,9 +67,15 @@ function getReceiptsForPeriod(allReceipts, productKey, date, timeSlot) {
 }
 
 function getLiftingForPeriod(liftings, terminalConfig, productKey, date, timeSlot) {
-  const tankIds = new Set((terminalConfig.products[productKey]?.tanks ?? []).map(t => t.id));
+  const tankIds = new Set(
+    (terminalConfig.products[productKey]?.tanks ?? []).map(t => t.id)
+  );
   return liftings
-    .filter(l => l.date === date && l.timeSlot === timeSlot && tankIds.has(l.tankId))
+    .filter(l =>
+      l.date === date &&
+      l.timeSlot === timeSlot &&
+      (l.productKey === productKey || tankIds.has(l.tankId))
+    )
     .reduce((sum, l) => sum + l.volume, 0);
 }
 

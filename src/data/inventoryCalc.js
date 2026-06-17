@@ -133,7 +133,7 @@ export function buildPlanGrid({
               t.id === receiptTankId &&
               !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
               !manualInputs[`${t.id}-${date}-${timeSlot}`]?.idle &&
-              (t.safeFill - (lastPeriod[t.id]?.closingInventory ??
+              (t.safeFill - t.heel - (lastPeriod[t.id]?.closingInventory ??
                 openingMap[t.id]?.pumpable ?? 0)) > 0
             );
 
@@ -153,10 +153,10 @@ export function buildPlanGrid({
                   !manualInputs[`${t.id}-${date}-${timeSlot}`]?.idle
                 );
                 receiptTankId = (pool.length ? pool : product.tanks).reduce((bestId, t) => {
-                  const space    = t.safeFill - (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0);
+                  const space    = (t.safeFill - t.heel) - (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0);
                   const bestTank = product.tanks.find(t2 => t2.id === bestId);
                   const bestSpace = bestTank
-                    ? bestTank.safeFill - (lastPeriod[bestId]?.closingInventory ?? openingMap[bestId]?.pumpable ?? 0)
+                    ? (bestTank.safeFill - bestTank.heel) - (lastPeriod[bestId]?.closingInventory ?? openingMap[bestId]?.pumpable ?? 0)
                     : -Infinity;
                   return space > bestSpace ? t.id : bestId;
                 }, null);
