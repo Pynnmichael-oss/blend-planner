@@ -64,11 +64,8 @@ export function buildLiftingsGridWithBase(terminalConfig, startDate, planDays, d
       const baseAbs = dailyBase[productKey] ?? 0;
       const mult    = WEEKDAY_MULT[weekday] ?? 1;
       for (const { calcKey: timeSlot, dist } of SLOT_CONFIG) {
-        const total   = Math.round(-baseAbs * mult * dist);
-        const perTank = Math.round(total / tanks.length);
-        for (const tank of tanks) {
-          result.push({ tankId: tank.id, date, timeSlot, volume: perTank });
-        }
+        const total = Math.round(-baseAbs * mult * dist);
+        result.push({ productKey, tankId: null, date, timeSlot, volume: total });
       }
     }
   }
@@ -87,11 +84,8 @@ export function buildLiftingsGrid(terminalConfig, startDate, planDays) {
       const tanks = product.tanks;
       if (tanks.length === 0) continue;
       for (const { calcKey: timeSlot } of SLOT_CONFIG) {
-        const total  = getDefaultLifting(productKey, weekday, timeSlot);
-        const perTank = Math.round(total / tanks.length);
-        for (const tank of tanks) {
-          result.push({ tankId: tank.id, date, timeSlot, volume: perTank });
-        }
+        const total = getDefaultLifting(productKey, weekday, timeSlot);
+        result.push({ productKey, tankId: null, date, timeSlot, volume: total });
       }
     }
   }

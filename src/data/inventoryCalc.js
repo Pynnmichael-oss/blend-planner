@@ -53,7 +53,8 @@ export function buildPlanGrid({
   // Pre-aggregate liftings to product/period totals
   const productPeriodLiftings = {};
   for (const l of liftings) {
-    const pk = tankToProduct[l.tankId];
+    // Support both product-level (new) and per-tank (legacy) format
+    const pk = l.productKey ?? tankToProduct[l.tankId];
     if (!pk) continue;
     const key = `${pk}-${l.date}-${l.timeSlot}`;
     productPeriodLiftings[key] = (productPeriodLiftings[key] ?? 0) + l.volume;

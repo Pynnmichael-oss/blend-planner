@@ -51,19 +51,18 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
   const dates = getDates(startDate, planDays);
   const productKeys = Object.keys(terminalConfig.products);
 
-  // Build lookup: tankId-date-timeSlot → volume
+  // Build lookup: productKey-date-timeSlot → volume (supports both formats)
   const lookup = {};
-  for (const l of liftings) lookup[`${l.tankId}-${l.date}-${l.timeSlot}`] = l.volume;
+  for (const l of liftings) {
+    const pk = l.productKey ?? Object.entries(terminalConfig.products)
+      .find(([, p]) => p.tanks.some(t => t.id === l.tankId))?.[0];
+    if (pk) lookup[`${pk}-${l.date}-${l.timeSlot}`] = (lookup[`${pk}-${l.date}-${l.timeSlot}`] ?? 0) + l.volume;
+  }
 
-  // Sum absolute liftings for a product on a given date across all slots and tanks
+  // Sum absolute liftings for a product on a given date across all slots
   function getDayTotal(productKey, date) {
-    const tanks = terminalConfig.products[productKey]?.tanks ?? [];
     let sum = 0;
-    for (const slot of TIME_SLOTS) {
-      for (const tank of tanks) {
-        sum += lookup[`${tank.id}-${date}-${slot}`] ?? 0;
-      }
-    }
+    for (const slot of TIME_SLOTS) sum += lookup[`${productKey}-${date}-${slot}`] ?? 0;
     return Math.abs(Math.round(sum));
   }
 
@@ -76,21 +75,25 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
     return Math.round(base * mult);
   }
 
-  // Redistribute a new daily total across all 4 slots for that product/date
+  function handleCellChange(productKey, date, timeSlot, rawValue) {
+    const totalNeg = -(Math.abs(parseFloat(rawValue) || 0));
+    const updated = liftings.filter(l =>
+      !(l.productKey === productKey &&
+        l.date === date &&
+        l.timeSlot === timeSlot)
+    );
+    updated.push({ productKey, tankId: null, date, timeSlot, volume: totalNeg });
+    onLiftingsChange(updated);
+  }
+
+  // Distribute a daily total edit across all 4 slots using SLOT_DIST weights
   function handleDayChange(productKey, date, rawValue) {
     const newTotal = Math.abs(parseFloat(rawValue) || 0);
-    const tanks = terminalConfig.products[productKey]?.tanks ?? [];
-    if (!tanks.length) return;
-    const tankIds = new Set(tanks.map(t => t.id));
-
-    const updated = liftings.map(l => {
-      if (l.date !== date || !tankIds.has(l.tankId)) return l;
-      const productOfTank = Object.entries(terminalConfig.products)
-        .find(([, p]) => p.tanks.some(t => t.id === l.tankId))?.[0];
-      if (productOfTank !== productKey) return l;
-      const slotTotal = Math.round(-newTotal * (SLOT_DIST[l.timeSlot] ?? 0.25));
-      return { ...l, volume: Math.round(slotTotal / tanks.length) };
-    });
+    const updated = liftings.filter(l => !(l.productKey === productKey && l.date === date));
+    for (const slot of TIME_SLOTS) {
+      updated.push({ productKey, tankId: null, date, timeSlot: slot,
+        volume: -(Math.round(newTotal * (SLOT_DIST[slot] ?? 0.25))) });
+    }
     onLiftingsChange(updated);
   }
 
