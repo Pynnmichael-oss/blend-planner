@@ -196,6 +196,22 @@ export function buildPlanGrid({
         // Determine rack tank for this period
         // Manual override takes precedence
         if (!primaryRackId) {
+          // post-blend rack handoff: blended tank takes rack immediately
+          // — it now carries the highest RVP and should ship first
+          const justFinishedBlend = product.tanks.find(t => {
+            const wasBlending = lastPeriod[t.id]?.blendActive === true;
+            const nowBlending = manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive === true;
+            return wasBlending && !nowBlending;
+          });
+
+          if (justFinishedBlend) {
+            // Post-blend: switch rack to the tank that just finished
+            // It now has the highest RVP and is ready to ship
+            currentRackTank[productKey] = justFinishedBlend.id;
+            lastRackedTank[productKey]  = justFinishedBlend.id;
+          }
+
+          // Existing currentStillValid check follows unchanged
           const current = currentRackTank[productKey];
           const currentStillValid = current && product.tanks.some(t =>
             t.id === current &&
@@ -337,7 +353,7 @@ export function buildPlanGrid({
               : undefined,
           });
 
-          lastPeriod[tank.id] = { closingInventory: effectiveClosing, closingRVP };
+          lastPeriod[tank.id] = { closingInventory: effectiveClosing, closingRVP, blendActive };
         }
       }
     }
