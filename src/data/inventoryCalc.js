@@ -260,10 +260,10 @@ export function buildPlanGrid({
           const manualKey    = `${tank.id}-${date}-${timeSlot}`;
           const manual       = manualInputs[manualKey] ?? {};
           const prev         = lastPeriod[tank.id];
-          // First period: convert openingMap.pumpable (TOV) to pumpable above heel
+          // opening is already pumpable above heel — no adjustment needed
           const opening    = prev
             ? prev.closingInventory
-            : Math.max((openingMap[tank.id]?.pumpable ?? 0) - tank.heel, 0);
+            : (openingMap[tank.id]?.pumpable ?? 0);
           const openingRVP = prev ? prev.closingRVP : (openingMap[tank.id]?.rvp ?? 0);
           const tankReceipts = receiptAssignment[tank.id] ?? [];
           const blendActive  = manual.blendActive ?? false;
@@ -282,7 +282,8 @@ export function buildPlanGrid({
           const hasConflict    = blendActive && (receiptVolume > 0 || isRackTank);
 
           // safeFill cap — spill to next available tank per Kelly spec
-          const spaceAvailable = Math.max(0, tank.safeFill - opening - rackLoadings);
+          const pumpableMax    = tank.safeFill - tank.heel;
+          const spaceAvailable = Math.max(0, pumpableMax - opening - rackLoadings);
           const cappedReceipts = hasConflict ? 0 : Math.min(receiptVolume, spaceAvailable);
           const spillVolume    = hasConflict ? 0 : (receiptVolume - cappedReceipts);
 
@@ -295,7 +296,7 @@ export function buildPlanGrid({
             const nextTank = product.tanks.find(
               t => t.id !== tank.id &&
                    !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
-                   (t.safeFill - (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0)) > 0
+                   (t.safeFill - t.heel) - (lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0) > 0
             );
             if (nextTank) (receiptAssignment[nextTank.id] ??= []).push({ volume: spillVolume, rvp: spillRvp });
           }
@@ -311,7 +312,6 @@ export function buildPlanGrid({
             receipts: cappedTankReceipts,
           });
 
-          const pumpableMax = tank.safeFill - tank.heel;
           const fillPct = pumpableMax > 0 ? pumpableClosing / pumpableMax : 0;
           const space   = pumpableMax - pumpableClosing;
 
