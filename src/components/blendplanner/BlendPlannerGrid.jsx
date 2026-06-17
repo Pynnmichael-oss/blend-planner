@@ -4,12 +4,11 @@ import AllocationPanel from './AllocationPanel';
 import TankRow from './TankRow';
 
 const C = {
-  bg:        '#111827',
-  border:    '#1e293b',
-  borderDay: '#2a2d3a',
-  text:      '#f1f5f9',
-  muted:     '#64748b',
-  amber:     '#f59e0b',
+  bg:     '#111827',
+  border: '#1e293b',
+  text:   '#f1f5f9',
+  muted:  '#64748b',
+  amber:  '#f59e0b',
 };
 
 const WEEKDAY_ABBR = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
@@ -79,7 +78,6 @@ const thBase = {
   fontWeight: 'normal',
   borderBottom: `0.5px solid #1e293b`,
   textAlign: 'center',
-  backgroundColor: '#111827',
   whiteSpace: 'nowrap',
 };
 
@@ -115,6 +113,10 @@ export default function BlendPlannerGrid({
         if (!product.tanks.length) return null;
         const dateSpans = spansByDate(periods);
 
+        // Build date → 0-based index map for alternating column backgrounds
+        const dateIndexMap = {};
+        dateSpans.forEach(({ date }, i) => { dateIndexMap[date] = i; });
+
         return (
           <div key={productKey}>
             {/* 24px section divider between products */}
@@ -143,14 +145,17 @@ export default function BlendPlannerGrid({
                   <tr>
                     <th style={{
                       ...thBase, width: '88px', minWidth: '88px', textAlign: 'left',
-                      borderRight: `3px solid #f59e0b`,
+                      backgroundColor: C.bg,
+                      borderRight: `0.5px solid ${C.border}`,
                     }} />
-                    {dateSpans.map(({ date, count }) => {
+                    {dateSpans.map(({ date, count }, idx) => {
                       const { weekday, monthDay } = dateHeaderParts(date);
+                      const dayBg = idx % 2 === 0 ? '#0f1520' : '#111827';
                       return (
                         <th key={date} colSpan={count} style={{
                           ...thBase, fontWeight: 'bold',
-                          borderRight: `3px solid #f59e0b`,
+                          backgroundColor: dayBg,
+                          borderRight: `0.5px solid ${C.border}`,
                           borderLeft: `0.5px solid ${C.border}`,
                         }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', padding: '2px 0' }}>
@@ -165,15 +170,17 @@ export default function BlendPlannerGrid({
                   </tr>
                   {/* Row 2: slot labels */}
                   <tr>
-                    <th style={{ ...thBase, textAlign: 'left', color: C.muted, borderRight: `1px solid ${C.borderDay}`, fontSize: '10px' }}>
+                    <th style={{ ...thBase, textAlign: 'left', color: C.muted, backgroundColor: C.bg, borderRight: `0.5px solid ${C.border}`, fontSize: '10px' }}>
                       Tank
                     </th>
-                    {periods.map((p, idx) => {
-                      const daySep = idx >= periods.length - 1 || periods[idx].date !== periods[idx + 1]?.date;
+                    {periods.map((p) => {
+                      const dayIdx = dateIndexMap[p.date] ?? 0;
+                      const dayBg  = dayIdx % 2 === 0 ? '#0f1520' : '#111827';
                       return (
                         <th key={p.key} style={{
                           ...thBase, fontSize: '10px', color: C.muted,
-                          borderRight: daySep ? `3px solid #f59e0b` : `0.5px solid ${C.border}`,
+                          backgroundColor: dayBg,
+                          borderRight: `0.5px solid ${C.border}`,
                         }}>
                           {SLOT_LABEL[p.timeSlot] ?? p.timeSlot}
                         </th>
@@ -192,6 +199,7 @@ export default function BlendPlannerGrid({
                       toggleBlend={toggleBlend}
                       onToggleIdle={toggleIdle}
                       onCellClick={setSelectedPeriod}
+                      dateIndexMap={dateIndexMap}
                     />
                   ))}
                 </tbody>

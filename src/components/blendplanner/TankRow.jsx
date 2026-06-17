@@ -9,7 +9,6 @@ const C = {
   conflictBg:  '#1a1200',
   overfillBg:  '#0f0a1a',
   border:      '#1e293b',
-  borderDay:   '#2a2d3a',
   text:        '#f1f5f9',
   muted:       '#64748b',
   amber:       '#f59e0b',
@@ -41,18 +40,13 @@ const INV_COLOR = {
   CONFLICT: '#fde68a',
 };
 
-function isDaySep(periods, idx) {
-  if (idx >= periods.length - 1) return true;
-  return periods[idx].date !== periods[idx + 1].date;
-}
-
-export default function TankRow({ tank, periods, cells, openingFillPct, toggleBlend, onToggleIdle, onCellClick }) {
+export default function TankRow({ tank, periods, cells, openingFillPct, toggleBlend, onToggleIdle, onCellClick, dateIndexMap }) {
   return (
     <tr>
       {/* ── Row header ─── */}
       <td style={{
         padding: '6px 8px', backgroundColor: C.bg,
-        borderBottom: `0.5px solid ${C.border}`, borderRight: `3px solid #f59e0b`,
+        borderBottom: `0.5px solid ${C.border}`, borderRight: `0.5px solid ${C.border}`,
         verticalAlign: 'middle', whiteSpace: 'nowrap', position: 'sticky', left: 0, zIndex: 1,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -62,16 +56,17 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
       </td>
 
       {/* ── Period cells ─── */}
-      {periods.map((p, idx) => {
-        const entry  = cells?.[p.key];
-        const daySep = isDaySep(periods, idx);
+      {periods.map((p) => {
+        const entry    = cells?.[p.key];
+        const dayIndex = dateIndexMap?.[p.date] ?? 0;
+        const dayBg    = dayIndex % 2 === 0 ? '#0f1520' : '#111827';
 
         if (!entry) {
           return (
             <td key={p.key} style={{
-              minWidth: '160px', backgroundColor: C.bg,
+              minWidth: '160px', backgroundColor: dayBg,
               borderBottom: `0.5px solid ${C.border}`,
-              borderRight: daySep ? `3px solid #f59e0b` : `0.5px solid ${C.border}`,
+              borderRight: `0.5px solid ${C.border}`,
             }} />
           );
         }
@@ -81,7 +76,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
         const cellBg   = status === 'BLEND'    ? C.blendBg
                        : status === 'CONFLICT' ? C.conflictBg
                        : status === 'OVERFILL' ? C.overfillBg
-                       : C.bg;
+                       : dayBg;
         const leftBorder = CELL_LEFT_BORDER[status];
         const invColor = INV_COLOR[status] ?? C.text;
         const recVol   = entry.receipts.reduce((s, r) => s + r.volume, 0);
@@ -95,7 +90,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
               minWidth: '160px', padding: '8px 10px', verticalAlign: 'top',
               cursor: 'pointer', backgroundColor: cellBg,
               borderBottom: `0.5px solid ${C.border}`,
-              borderRight: daySep ? `3px solid #f59e0b` : `0.5px solid ${C.border}`,
+              borderRight: `0.5px solid ${C.border}`,
               borderLeft: leftBorder,
             }}
           >
