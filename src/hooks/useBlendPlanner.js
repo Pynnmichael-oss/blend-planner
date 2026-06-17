@@ -34,16 +34,18 @@ export default function useBlendPlanner() {
   const [parsedReceipts, setParsedReceipts] = useState(null);
   const [rvpValues,      setRvpValues]      = useState({});
   const [rvpConfirmed,   setRvpConfirmed]   = useState({});
+  // null = show all slots; when set, hides slots before this value on the first day only
+  const [startSlot, setStartSlot] = useState(null);
 
   const terminalConfig = TERMINAL_CONFIGS[terminalId];
 
   const grid = useMemo(
     () => buildPlanGrid({
       terminalConfig, openingInventory, receipts, planDays, startDate,
-      manualInputs, liftings, receiptAllocations, rackTankAssignments,
+      manualInputs, liftings, receiptAllocations, rackTankAssignments, startSlot,
     }),
     [terminalConfig, openingInventory, receipts, planDays, startDate,
-     manualInputs, liftings, receiptAllocations, rackTankAssignments],
+     manualInputs, liftings, receiptAllocations, rackTankAssignments, startSlot],
   );
 
   function toggleBlend(tankId, date, timeSlot) {
@@ -97,5 +99,6 @@ export default function useBlendPlanner() {
     parsedReceipts, setParsedReceipts,
     rvpValues, setRvpValues,
     rvpConfirmed, setRvpConfirmed,
+    startSlot, setStartSlot,
   };
 }

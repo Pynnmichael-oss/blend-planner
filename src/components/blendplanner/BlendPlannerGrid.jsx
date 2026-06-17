@@ -143,14 +143,14 @@ export default function BlendPlannerGrid({
                   <tr>
                     <th style={{
                       ...thBase, width: '88px', minWidth: '88px', textAlign: 'left',
-                      borderRight: `1px solid ${C.borderDay}`,
+                      borderRight: `3px solid #f59e0b`,
                     }} />
                     {dateSpans.map(({ date, count }) => {
                       const { weekday, monthDay } = dateHeaderParts(date);
                       return (
                         <th key={date} colSpan={count} style={{
                           ...thBase, fontWeight: 'bold',
-                          borderRight: `1px solid ${C.borderDay}`,
+                          borderRight: `3px solid #f59e0b`,
                           borderLeft: `0.5px solid ${C.border}`,
                         }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', padding: '2px 0' }}>
@@ -173,7 +173,7 @@ export default function BlendPlannerGrid({
                       return (
                         <th key={p.key} style={{
                           ...thBase, fontSize: '10px', color: C.muted,
-                          borderRight: daySep ? `1px solid ${C.borderDay}` : `0.5px solid ${C.border}`,
+                          borderRight: daySep ? `3px solid #f59e0b` : `0.5px solid ${C.border}`,
                         }}>
                           {SLOT_LABEL[p.timeSlot] ?? p.timeSlot}
                         </th>

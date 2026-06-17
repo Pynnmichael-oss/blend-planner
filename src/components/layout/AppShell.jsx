@@ -65,6 +65,7 @@ export default function AppShell({
   parsedReceipts, setParsedReceipts,
   rvpValues, setRvpValues,
   rvpConfirmed, setRvpConfirmed,
+  startSlot, setStartSlot,
 }) {
   const [activeTab,  setActiveTab]  = useState('PLAN');
   const [open,       setOpen]       = useState({ inventory: true });
@@ -140,8 +141,31 @@ export default function AppShell({
           })}
         </div>
 
-        {/* Plan day pill toggles — always visible */}
-        <div style={{ display: 'flex', gap: '4px', marginLeft: 'auto', alignItems: 'center' }}>
+        {/* Start slot selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
+          <span style={{ fontSize: '10px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
+            Start
+          </span>
+          <select
+            value={startSlot ?? 'null'}
+            onChange={e => setStartSlot(e.target.value === 'null' ? null : e.target.value)}
+            style={{
+              backgroundColor: C.panel, color: C.text,
+              border: `1px solid ${C.border}`, borderRadius: '4px',
+              padding: '2px 6px', fontSize: '11px', fontFamily: 'monospace',
+              colorScheme: 'dark', outline: 'none', cursor: 'pointer',
+            }}
+          >
+            <option value="null">Full day</option>
+            <option value="00-05">00:00</option>
+            <option value="06-11">06:00</option>
+            <option value="12-17">12:00</option>
+            <option value="18-23">18:00</option>
+          </select>
+        </div>
+
+        {/* Plan day pill toggles */}
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
           {DAY_OPTIONS.map(n => (
             <button
               key={n}

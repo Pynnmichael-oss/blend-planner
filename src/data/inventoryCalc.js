@@ -12,6 +12,8 @@ export const TIME_SLOTS = ["00-05", "06-11", "12-17", "18-23"];
 const BUTANE_RVP = 52;
 const TRUCK_BBLS = 190;
 
+const SLOT_ORDER = { "00-05": 0, "06-11": 1, "12-17": 2, "18-23": 3 };
+
 // startDate anchors the grid — no longer derived from receipts.
 export function buildDateList(startDate, planDays) {
   const dates = [];
@@ -34,6 +36,7 @@ export function buildPlanGrid({
   receiptAllocations = {},
   // Shape: "product-date-slot" → { primary: tankId, handoff: tankId|null, handoffVolume: number }
   rackTankAssignments = {},
+  startSlot = null,
 }) {
   const dates = buildDateList(startDate, planDays);
   const openingMap = Object.fromEntries(openingInventory.map(t => [t.tankId, t]));
@@ -61,6 +64,20 @@ export function buildPlanGrid({
 
   for (const date of dates) {
     for (const timeSlot of TIME_SLOTS) {
+
+      // Skip slots before startSlot on the first day only
+      if (date === dates[0] && startSlot !== null && SLOT_ORDER[timeSlot] < SLOT_ORDER[startSlot]) {
+        for (const [, product] of Object.entries(terminalConfig.products)) {
+          for (const tank of product.tanks) {
+            lastPeriod[tank.id] = {
+              closingInventory: openingMap[tank.id]?.pumpable ?? 0,
+              closingRVP: openingMap[tank.id]?.rvp ?? 0,
+            };
+          }
+        }
+        continue;
+      }
+
       for (const [productKey, product] of Object.entries(terminalConfig.products)) {
 
         // ── Receipt assignment for this product/period ─────────────────
@@ -243,6 +260,7 @@ export function buildPlanGrid({
           }
 
           const closingInventory = opening + cappedReceipts + rackLoadings;
+          const effectiveClosing = Math.max(closingInventory, tank.heel);
 
           const closingRVP = calcClosingRVP({
             openingRVP,
@@ -251,17 +269,15 @@ export function buildPlanGrid({
             receipts: cappedTankReceipts,
           });
 
-          const fillPct = closingInventory / tank.safeFill;
-          const space   = tank.safeFill - closingInventory;
+          const fillPct = effectiveClosing / tank.safeFill;
+          const space   = tank.safeFill - effectiveClosing;
 
           // Status — derived only, never manually set
-          const belowHeel = closingInventory < tank.heel;
-
           let status;
-          if      (isManualIdle)                     status = "IDLE";
-          else if (closingInventory > tank.safeFill)  status = "OVERFILL";
-          else if (hasConflict)                       status = "CONFLICT";
-          else if (blendActive)                       status = "BLEND";
+          if      (isManualIdle)                        status = "IDLE";
+          else if (effectiveClosing > tank.safeFill)    status = "OVERFILL";
+          else if (hasConflict)                         status = "CONFLICT";
+          else if (blendActive)                         status = "BLEND";
           else {
             const onRack    = isRackTank && totalLifting !== 0;
             const onReceipt = cappedReceipts > 0;
@@ -270,8 +286,6 @@ export function buildPlanGrid({
             else if (onReceipt)           status = "RECEIPT";
             else                          status = "IDLE";
           }
-          if (belowHeel && status === 'IDLE') status = 'LOW';
-          if (belowHeel && status === 'RACK') status = 'LOW';
 
           result.push({
             tankId: tank.id,
@@ -283,7 +297,8 @@ export function buildPlanGrid({
             receipts: tankReceipts,
             rackLoadings,
             blendActive,
-            closingInventory,
+            closingInventory: effectiveClosing,
+            rawClosingInventory: closingInventory,
             closingRVP,
             fillPct,
             space,
@@ -292,7 +307,7 @@ export function buildPlanGrid({
             manualIdle: isManualIdle,
             spillVolume,
             spillWarning: spillVolume > 0,
-            belowHeel,
+            belowHeel: false,
             heel: tank.heel,
             safeFill: tank.safeFill,
             conflictMessage: hasConflict
@@ -300,7 +315,7 @@ export function buildPlanGrid({
               : undefined,
           });
 
-          lastPeriod[tank.id] = { closingInventory, closingRVP };
+          lastPeriod[tank.id] = { closingInventory: effectiveClosing, closingRVP };
         }
       }
     }
@@ -310,12 +325,10 @@ export function buildPlanGrid({
   const byTank = {};
   for (const entry of result) (byTank[entry.tankId] ??= []).push(entry);
 
-  const slotOrder = { "00-05": 0, "06-11": 1, "12-17": 2, "18-23": 3 };
-
   for (const entries of Object.values(byTank)) {
     entries.sort((a, b) => a.date !== b.date
       ? a.date < b.date ? -1 : 1
-      : slotOrder[a.timeSlot] - slotOrder[b.timeSlot]);
+      : SLOT_ORDER[a.timeSlot] - SLOT_ORDER[b.timeSlot]);
 
     for (let i = 0; i < entries.length - 1; i++) {
       const curr = entries[i];

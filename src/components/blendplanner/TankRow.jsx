@@ -52,7 +52,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
       {/* ── Row header ─── */}
       <td style={{
         padding: '6px 8px', backgroundColor: C.bg,
-        borderBottom: `0.5px solid ${C.border}`, borderRight: `1px solid ${C.borderDay}`,
+        borderBottom: `0.5px solid ${C.border}`, borderRight: `3px solid #f59e0b`,
         verticalAlign: 'middle', whiteSpace: 'nowrap', position: 'sticky', left: 0, zIndex: 1,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -71,7 +71,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             <td key={p.key} style={{
               minWidth: '160px', backgroundColor: C.bg,
               borderBottom: `0.5px solid ${C.border}`,
-              borderRight: daySep ? `1px solid ${C.borderDay}` : `0.5px solid ${C.border}`,
+              borderRight: daySep ? `3px solid #f59e0b` : `0.5px solid ${C.border}`,
             }} />
           );
         }
@@ -95,7 +95,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
               minWidth: '160px', padding: '8px 10px', verticalAlign: 'top',
               cursor: 'pointer', backgroundColor: cellBg,
               borderBottom: `0.5px solid ${C.border}`,
-              borderRight: daySep ? `1px solid ${C.borderDay}` : `0.5px solid ${C.border}`,
+              borderRight: daySep ? `3px solid #f59e0b` : `0.5px solid ${C.border}`,
               borderLeft: leftBorder,
             }}
           >

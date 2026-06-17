@@ -9,10 +9,6 @@ const C = {
   blue:   '#60a5fa',
 };
 
-// Display in thousands (38500 → "38.5"), store full value
-function toK(v) { return (v / 1000).toFixed(1); }
-function fromK(s) { return Math.round((parseFloat(s) || 0) * 1000); }
-
 const inputBase = {
   backgroundColor: C.bg, color: C.text,
   border: `1px solid ${C.border}`, borderRadius: '3px',
@@ -22,7 +18,9 @@ const inputBase = {
 
 export default function OpeningInventoryForm({ openingInventory, terminalConfig, setOpeningInventory }) {
   function handleChange(tankId, field, raw) {
-    const value = field === 'pumpable' ? fromK(raw) : (parseFloat(raw) || 0);
+    const value = field === 'pumpable'
+      ? Math.round(parseFloat(raw) || 0)
+      : (parseFloat(raw) || 0);
     setOpeningInventory(openingInventory.map(t => t.tankId === tankId ? { ...t, [field]: value } : t));
   }
 
@@ -31,7 +29,7 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
       <thead>
         <tr style={{ color: C.muted }}>
           <th style={{ textAlign: 'left',  padding: '2px 4px', fontWeight: 'normal', fontSize: '10px' }}>Tank</th>
-          <th style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 'normal', fontSize: '10px' }}>k bbl</th>
+          <th style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 'normal', fontSize: '10px' }}>bbl</th>
           <th style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 'normal', fontSize: '10px' }}>RVP</th>
         </tr>
       </thead>
@@ -67,10 +65,11 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
                   <td style={{ padding: '3px 4px', textAlign: 'right' }}>
                     <input
                       type="number"
-                      step="0.1"
-                      value={toK(inv.pumpable)}
+                      step={100}
+                      value={inv.pumpable}
+                      placeholder="e.g. 38500"
                       onChange={e => handleChange(tank.id, 'pumpable', e.target.value)}
-                      style={{ ...inputBase, width: '62px', color: C.text }}
+                      style={{ ...inputBase, width: '72px', color: C.text }}
                     />
                   </td>
                   <td style={{ padding: '3px 4px', textAlign: 'right' }}>

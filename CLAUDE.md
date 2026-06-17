@@ -1,4 +1,8 @@
-# Blend Planner — CLAUDE.md
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+# Blend Planner
 
 Operational planning tool for petroleum terminal rack blending.
 Built by Michael Pynn. Domain expert: Kelly (terminal operations).
@@ -11,7 +15,8 @@ Built by Michael Pynn. Domain expert: Kelly (terminal operations).
 - Tailwind CSS v4 (`@import "tailwindcss"` in `index.css` — no config file needed)
 - No backend, no router, no state library — single-page, all state in one hook
 - Deployed to GitHub Pages at `/blend-planner/` (`vite.config.js` `base` is set)
-- `npm run dev` · `npm run build` · `npm run deploy` (gh-pages)
+- `npm run dev` · `npm run build` · `npm run preview` · `npm run lint` · `npm run deploy` (gh-pages)
+- Tailwind v4 is wired via `@import "tailwindcss"` in `index.css` through PostCSS — **`@tailwindcss/vite` is in `package.json` but is NOT added to `vite.config.js`**; do not add it without testing
 
 ---
 
@@ -352,7 +357,7 @@ green:     '#22c55e'   // ok status (not heavily used in new palette)
 
 ## Liftings Curve
 
-`buildLiftingsGrid(terminalConfig, startDate, planDays)` distributes daily demand evenly
+`buildLiftingsGridWithBase(terminalConfig, startDate, planDays, dailyBase)` (used in `useBlendPlanner` with `DEFAULT_DAILY_BASE`) distributes daily demand evenly. `buildLiftingsGrid()` is a convenience wrapper that calls it with the hardcoded `DAILY_BASE`.
 across all tanks of each product for the plan window. Initial distribution is a placeholder.
 Fine-grained control is via `AllocationPanel` → `liftingAllocations`.
 
