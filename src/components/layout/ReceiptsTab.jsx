@@ -4,10 +4,10 @@ import LiftingsInput from '../datainput/LiftingsInput';
 
 // TODO: O-5 — replace with season-aware spec values once confirmed by Kelly
 const GRADE_RVP_DEFAULTS = {
-  '4C': 7.0, '4D': 7.0, '75': 7.0,
+  '4C': 7.0, '4D': 7.0,
   '3C': 7.0, '3D': 7.0,
 };
-const GRADES = ['4C', '4D', '75', '3C', '3D'];
+const GRADES = ['4C', '4D', '3C', '3D'];
 
 const C = {
   bg: '#0a0c12', panel: '#0f1117', panel2: '#111827',
@@ -315,7 +315,7 @@ export default function ReceiptsTab({
               const affectedCount = parsed
                 ? parsed.filter(r => r.grade === grade && !rvpConfirmed[r.batchCode]).length
                 : 0;
-              const isReg = ['4C','4D','75'].includes(grade);
+              const isReg = ['4C','4D'].includes(grade);
 
               return (
                 <div key={grade} style={{ marginBottom: '8px' }}>
