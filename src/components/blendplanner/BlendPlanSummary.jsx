@@ -83,7 +83,7 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
   const safeFill = tankConfig?.safeFill ?? 0;
   const space = pump > 0 ? safeFill - pump - heel : null;
   const warnHeadroom = space !== null && butaneHigh !== null && butaneHigh > space;
-  const warnNoPumpable = butane !== null && pumpable === '';
+  const warnNoPumpable = butaneHigh !== null && pumpable === '';
 
   const warnCeilingActual = !isNaN(act) && act >= specCeiling;
   const warnCeilingTarget = !isNaN(tgt) && tgt > specCeiling;
