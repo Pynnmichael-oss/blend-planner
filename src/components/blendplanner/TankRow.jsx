@@ -153,9 +153,14 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
 
             {/* Post-blend butane addition */}
             {entry.postBlendButane > 0 && (
-              <div style={{ fontSize: '9px', color: '#22c55e', fontFamily: 'monospace', marginTop: '2px' }}>
-                +{Math.round(entry.postBlendButane).toLocaleString()} bbl ({entry.postBlendTrucks}T) RVP→{entry.postBlendRVP?.toFixed(2)}
-              </div>
+              <>
+                <div style={{ fontSize: '9px', color: '#22c55e', fontFamily: 'monospace', marginTop: '3px' }}>
+                  +{Math.round(entry.postBlendButane).toLocaleString()} bbl · {entry.postBlendTrucks} trucks
+                </div>
+                <div style={{ fontSize: '9px', color: '#60a5fa', fontFamily: 'monospace' }}>
+                  RVP → {entry.postBlendRVP?.toFixed(2)}
+                </div>
+              </>
             )}
 
             {/* Batch codes */}

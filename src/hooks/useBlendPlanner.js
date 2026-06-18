@@ -44,10 +44,12 @@ export default function useBlendPlanner() {
   const grid = useMemo(
     () => buildPlanGrid({
       terminalConfig, openingInventory, receipts, planDays, startDate,
-      manualInputs, liftings, receiptAllocations, rackTankAssignments, startSlot,
+      manualInputs, liftings, receiptAllocations, rackTankAssignments,
+      startSlot, specCeiling, blendTarget,
     }),
     [terminalConfig, openingInventory, receipts, planDays, startDate,
-     manualInputs, liftings, receiptAllocations, rackTankAssignments, startSlot],
+     manualInputs, liftings, receiptAllocations, rackTankAssignments,
+     startSlot, specCeiling, blendTarget],
   );
 
   function toggleBlend(tankId, date, timeSlot) {

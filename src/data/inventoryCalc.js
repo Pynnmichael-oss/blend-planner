@@ -37,6 +37,8 @@ export function buildPlanGrid({
   // Shape: "product-date-slot" → { primary: tankId, handoff: tankId|null, handoffVolume: number }
   rackTankAssignments = {},
   startSlot = null,
+  specCeiling = 9.0,
+  blendTarget = 8.75,
 }) {
   // Inventory tracked as pumpable barrels above heel throughout.
   // heel is added back only for TOV in blend calculations.
@@ -390,11 +392,12 @@ export function buildPlanGrid({
       const tov  = curr.closingTOV ?? (curr.closingInventory + (curr.heel ?? 0));
       const pumpableBeforeButane = curr.closingInventory;
 
-      const rvpTarget = 8.75; // TODO: pull from terminalConfig.blendSpec
+      const rvpTarget = blendTarget;
       const rvpActual = curr.closingRVP;
       const margin    = rvpTarget - rvpActual;
 
       if (margin <= 0) continue;
+      if (rvpActual >= specCeiling) continue;
 
       const denominator = BUTANE_RVP - rvpTarget;
       const butane_bbls = denominator > 0 ? (margin * tov) / denominator : 0;
