@@ -66,6 +66,7 @@ export function buildPlanGrid({
   const currentReceiptTank = {}; // productKey → tankId
   const lastRackedTank     = {}; // productKey → tankId
   const batchReceiptTank   = {}; // batchCode → tankId
+  const lastResultIdx      = {}; // tankId → index of its most recent result entry
   const result = [];
 
   for (const date of dates) {
@@ -340,6 +341,59 @@ export function buildPlanGrid({
             else                          status = "IDLE";
           }
 
+          // Detect blend-end: previous period was blending, this one is not
+          const wasBlending = prev?.blendActive === true;
+          const isBlendEnd  = wasBlending && !blendActive;
+
+          let extraFields = {};
+          let lastPeriodOverride = null;
+
+          if (isBlendEnd) {
+            const tov            = prev.closingInventory + tank.heel;
+            const rvpActualBlend = prev.closingRVP;
+            const margin         = blendTarget - rvpActualBlend;
+            if (margin > 0 && rvpActualBlend < specCeiling) {
+              const denom       = BUTANE_RVP - blendTarget;
+              const butane_bbls = denom > 0 ? (margin * tov) / denom : 0;
+              const trucks      = Math.floor(butane_bbls / TRUCK_BBLS);
+              const actualButane = trucks * TRUCK_BBLS;
+              if (trucks > 0) {
+                const blendedRVP = ((rvpActualBlend * tov) + (BUTANE_RVP * actualButane))
+                  / (tov + actualButane);
+                const newPumpable = Math.max(pumpableClosing + actualButane, 0);
+                extraFields = {
+                  openingInventory: opening + actualButane,
+                  openingRVP:       blendedRVP,
+                  closingInventory: newPumpable,
+                  closingTOV:       newPumpable + tank.heel,
+                  closingRVP:       blendedRVP,
+                  fillPct:          pumpableMax > 0 ? newPumpable / pumpableMax : 0,
+                  space:            pumpableMax - newPumpable,
+                  postBlendButane:  actualButane,
+                  postBlendTrucks:  trucks,
+                  postBlendRVP:     blendedRVP,
+                };
+                lastPeriodOverride = {
+                  closingInventory: newPumpable,
+                  closingRVP:       blendedRVP,
+                  blendActive:      false,
+                };
+                // Attach blendSummary to the last blending period's result entry
+                const prevIdx = lastResultIdx[tank.id];
+                if (prevIdx !== undefined) {
+                  result[prevIdx] = {
+                    ...result[prevIdx],
+                    blendSummary: {
+                      estPumpable: prev.closingInventory,
+                      tov, rvpActual: rvpActualBlend, rvpTarget: blendTarget,
+                      butane_bbls, trucks, actualButane, blendedRVP,
+                    },
+                  };
+                }
+              }
+            }
+          }
+
           result.push({
             tankId: tank.id,
             productKey,
@@ -366,86 +420,16 @@ export function buildPlanGrid({
             conflictMessage: hasConflict
               ? "Pipeline receipt blocked — tank is blending. Reallocate this batch."
               : undefined,
+            ...extraFields,
           });
 
           lastPeriod[tank.id] = { closingInventory: pumpableClosing, closingRVP, blendActive };
+          if (lastPeriodOverride) {
+            lastPeriod[tank.id] = lastPeriodOverride;
+            lastPeriodOverride = null;
+          }
+          lastResultIdx[tank.id] = result.length - 1;
         }
-      }
-    }
-  }
-
-  // Post-blend pass: apply butane lump sum to first period after each blend run ends
-  const byTank = {};
-  for (const entry of result) (byTank[entry.tankId] ??= []).push(entry);
-
-  for (const entries of Object.values(byTank)) {
-    entries.sort((a, b) => a.date !== b.date
-      ? a.date < b.date ? -1 : 1
-      : SLOT_ORDER[a.timeSlot] - SLOT_ORDER[b.timeSlot]);
-
-    for (let i = 0; i < entries.length - 1; i++) {
-      const curr = entries[i];
-      const next = entries[i + 1];
-
-      if (!curr.blendActive || next.blendActive) continue;
-
-      const tov  = curr.closingTOV ?? (curr.closingInventory + (curr.heel ?? 0));
-      const pumpableBeforeButane = curr.closingInventory;
-
-      const rvpTarget = blendTarget;
-      const rvpActual = curr.closingRVP;
-      const margin    = rvpTarget - rvpActual;
-
-      if (margin <= 0) continue;
-      if (rvpActual >= specCeiling) continue;
-
-      const denominator = BUTANE_RVP - rvpTarget;
-      const butane_bbls = denominator > 0 ? (margin * tov) / denominator : 0;
-      const trucks       = Math.floor(butane_bbls / TRUCK_BBLS);
-      const actualButane = trucks * TRUCK_BBLS;
-
-      if (trucks === 0) continue;
-
-      const blendedRVP = ((rvpActual * tov) + (BUTANE_RVP * actualButane)) / (tov + actualButane);
-
-      const idx = result.indexOf(next);
-      if (idx !== -1) {
-        const nextPumpableMax = (next.safeFill ?? 0) - (next.heel ?? 0);
-        const updated = {
-          ...next,
-          openingInventory: next.openingInventory + actualButane,
-          closingInventory: next.closingInventory + actualButane,
-          openingRVP:  blendedRVP,
-          closingRVP:  blendedRVP,
-          fillPct:     nextPumpableMax > 0 ? (next.closingInventory + actualButane) / nextPumpableMax : 0,
-          space:       nextPumpableMax - (next.closingInventory + actualButane),
-          postBlendButane: actualButane,
-          postBlendTrucks: trucks,
-          postBlendRVP:    blendedRVP,
-        };
-        result[idx]     = updated;
-        entries[i + 1]  = updated;
-
-        // post-blend: blended tank takes rack immediately — highest RVP product now ready to ship
-        const productKeyForTank = Object.entries(terminalConfig.products)
-          .find(([, p]) => p.tanks.some(t => t.id === curr.tankId))?.[0];
-        if (productKeyForTank) {
-          currentRackTank[productKeyForTank] = curr.tankId;
-          lastRackedTank[productKeyForTank]  = curr.tankId;
-        }
-      }
-
-      const currIdx = result.indexOf(curr);
-      if (currIdx !== -1) {
-        result[currIdx] = {
-          ...curr,
-          blendSummary: {
-            estPumpable: pumpableBeforeButane,
-            tov, rvpActual, rvpTarget,
-            butane_bbls, trucks, actualButane, blendedRVP,
-          },
-        };
-        entries[i] = result[currIdx];
       }
     }
   }
