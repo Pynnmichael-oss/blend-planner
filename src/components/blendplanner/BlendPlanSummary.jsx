@@ -42,6 +42,8 @@ function td(children, mono = false, style = {}) {
   );
 }
 
+const BUTANE_RVP = 52;
+
 // Per-blend butane calculator local state
 function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
   const tank = Object.values(terminalConfig.products)
@@ -64,15 +66,23 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
   const tov  = pump > 0 ? pump + heel : null;
   const margin = (!isNaN(tgt) && !isNaN(act)) ? (tgt - act) : null;
 
-  // Spec formula: 0.02 × TOV × (rvpTarget - rvpActual)
-  const butane = (tov && margin !== null && margin > 0) ? 0.02 * tov * margin : null;
-  const maxTrucks = butane !== null ? Math.floor(butane / 190) : null;
+  const marginLow  = margin !== null ? Math.max(margin - 0.1, 0) : null;
+  const marginHigh = margin !== null ? margin + 0.1 : null;
+
+  const denom = BUTANE_RVP - tgt;
+  const butaneLow  = (tov && marginLow  !== null && marginLow  > 0 && denom > 0)
+    ? (marginLow  * tov) / denom : null;
+  const butaneHigh = (tov && marginHigh !== null && marginHigh > 0 && denom > 0)
+    ? (marginHigh * tov) / denom : null;
+
+  const trucksLow  = butaneLow  !== null ? Math.floor(butaneLow  / 190) : null;
+  const trucksHigh = butaneHigh !== null ? Math.floor(butaneHigh / 190) : null;
 
   const tankConfig = Object.values(terminalConfig.products)
     .flatMap(p => p.tanks).find(t => t.id === blend.tankId);
   const safeFill = tankConfig?.safeFill ?? 0;
   const space = pump > 0 ? safeFill - pump - heel : null;
-  const warnHeadroom = space !== null && butane !== null && butane > space;
+  const warnHeadroom = space !== null && butaneHigh !== null && butaneHigh > space;
   const warnNoPumpable = butane !== null && pumpable === '';
 
   const warnCeilingActual = !isNaN(act) && act >= specCeiling;
@@ -159,12 +169,17 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
         </div>
       )}
 
-      {row('Butane needed', butane !== null ? `${Math.round(butane).toLocaleString()} bbl` : '—', true, butane ? C.amber : C.muted)}
-      {row('Trucks', maxTrucks !== null ? `${maxTrucks}` : '—', true)}
-      {maxTrucks !== null && (
-        <div style={{ fontSize: '10px', color: C.muted, textAlign: 'right', marginBottom: '4px' }}>
-          Partial trucks not dispatched — remainder stages to TK03
-        </div>
+      {row('Butane needed',
+        (butaneLow !== null && butaneHigh !== null)
+          ? `${Math.round(butaneLow).toLocaleString()} – ${Math.round(butaneHigh).toLocaleString()} bbl`
+          : '—',
+        true, C.amber
+      )}
+      {row('Trucks',
+        (trucksLow !== null && trucksHigh !== null)
+          ? `${trucksLow} – ${trucksHigh}`
+          : '—',
+        true, C.text
       )}
 
       {warnHeadroom && (
