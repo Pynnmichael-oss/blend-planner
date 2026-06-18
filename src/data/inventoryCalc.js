@@ -110,6 +110,27 @@ export function buildPlanGrid({
               (receiptAllocations[`${receipt.batchCode}-${date}-${timeSlot}-${t.id}`] ?? 0) > 0
             );
             if (allocTank) batchReceiptTank[receipt.batchCode] = allocTank.id;
+            // If manually allocated receipt tank is the current rack tank,
+            // move rack to the next highest-RVP non-receipt non-blending tank
+            if (allocTank && allocTank.id === currentRackTank[productKey]) {
+              const newRackPool = product.tanks.filter(t =>
+                t.id !== allocTank.id &&
+                !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
+                !manualInputs[`${t.id}-${date}-${timeSlot}`]?.idle &&
+                (lastPeriod[t.id]?.closingInventory ??
+                  openingMap[t.id]?.pumpable ?? 0) > 0
+              );
+              if (newRackPool.length > 0) {
+                const newRack = newRackPool.reduce((bestId, t) => {
+                  const rvp     = lastPeriod[t.id]?.closingRVP ?? openingMap[t.id]?.rvp ?? 0;
+                  const bestRvp = lastPeriod[bestId]?.closingRVP ?? openingMap[bestId]?.rvp ?? 0;
+                  return rvp > bestRvp ? t.id : bestId;
+                }, newRackPool[0].id);
+                currentRackTank[productKey] = newRack;
+                // Note: lastRackedTank intentionally not updated here —
+                // this is a conflict resolution handoff, not a completed rack
+              }
+            }
           } else {
             // batch sticks to assigned tank for its full duration
             // — rolls only if tank goes offline (blend/idle/full)
