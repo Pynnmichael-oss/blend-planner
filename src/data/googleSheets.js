@@ -81,10 +81,10 @@ export async function savePlanToSheet({
       b.startDate, b.startTime, b.endDate, b.endTime,
       b.periods,
       b.estPumpable  ?? '', b.estTOV    ?? '',
-      b.rvpActual    ?? '', b.rvpTarget ?? '',
+      b.rvpActual != null ? b.rvpActual.toFixed(3) : '', b.rvpTarget != null ? b.rvpTarget.toFixed(3) : '',
       b.butane_bbls  != null ? Math.round(b.butane_bbls) : '',
       b.trucks       ?? '',
-      b.blendedRVP   != null ? b.blendedRVP.toFixed(2) : '',
+      b.blendedRVP   != null ? b.blendedRVP.toFixed(3) : '',
       notes,
     ]);
 

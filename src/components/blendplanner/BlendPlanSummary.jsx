@@ -55,7 +55,7 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
 
   useEffect(() => {
     if (blend.estPumpable) setPumpable(String(Math.round(blend.estPumpable)));
-    if (blend.rvpActual)   setRvpActual(String(blend.rvpActual.toFixed(2)));
+    if (blend.rvpActual)   setRvpActual(String(blend.rvpActual.toFixed(3)));
     setRvpTarget(String(blendTarget));
   }, [blend.estPumpable, blend.rvpActual, blendTarget, specCeiling]);
 
@@ -117,7 +117,7 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
   );
 
   const marginValue = margin !== null
-    ? `${margin.toFixed(2)}  (${(margin - 0.1).toFixed(2)} – ${(margin + 0.1).toFixed(2)})`
+    ? `${margin.toFixed(3)}  (${(margin - 0.1).toFixed(3)} – ${(margin + 0.1).toFixed(3)})`
     : '—';
 
   return (
@@ -275,7 +275,7 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
                     {b.trucks !== null ? b.trucks : <span style={{ color: C.muted }}>—</span>}
                   </td>
                   <td style={{ ...tdBase, fontFamily: 'monospace', color: C.blue }}>
-                    {b.blendedRVP ? b.blendedRVP.toFixed(2) : <span style={{ color: C.muted }}>—</span>}
+                    {b.blendedRVP ? b.blendedRVP.toFixed(3) : <span style={{ color: C.muted }}>—</span>}
                   </td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>{b.truckStart}</td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>

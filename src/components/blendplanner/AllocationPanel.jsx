@@ -53,7 +53,7 @@ function TankRadioRow({ tank, selected, disabled, onSelect, currentRVP, currentV
         <span style={{ fontSize: '12px', color: C.text }}>{tank.label}</span>
         {currentRVP != null && (
           <span className="font-mono" style={{ fontSize: '10px', color: C.blue, marginLeft: '8px' }}>
-            RVP {currentRVP.toFixed(2)}
+            RVP {currentRVP.toFixed(3)}
           </span>
         )}
         {currentVol != null && (
@@ -205,7 +205,7 @@ export default function AllocationPanel({
                     <span className="font-mono" style={{ fontSize: '11px', color: C.text }}>{receipt.batchCode}</span>
                     <span className="font-mono" style={{ fontSize: '11px', color: C.muted }}>
                       {sliceVolume.toFixed(0)} bbl &nbsp;|&nbsp;
-                      <span style={{ color: C.blue }}>RVP {receipt.rvp ?? '—'}</span>
+                      <span style={{ color: C.blue }}>RVP {receipt.rvp != null ? receipt.rvp.toFixed(3) : '—'}</span>
                     </span>
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>

@@ -113,9 +113,9 @@ Each `src/config/*.json` follows this structure:
 
 | Tank | Product | safeFill | heel |
 |------|---------|----------|------|
-| TK55 | regular | 50393    | 6458 |
-| TK56 | regular | 43974    | 4407 |
-| TK03 | regular | 14428    | 1313 |
+| TK55 | regular | 56851    | 6458 |
+| TK56 | regular | 48382    | 4407 |
+| TK03 | regular | 15742    | 1313 |
 | TK04 | premium | 15838    | 1216 |
 | TK05 | premium | 13670    | 1369 |
 

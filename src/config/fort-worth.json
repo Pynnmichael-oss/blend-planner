@@ -15,9 +15,9 @@
     "regular": {
       "label": "Regular",
       "tanks": [
-        { "id": "TK55", "label": "Tank 55", "safeFill": 50393, "heel": 6458 },
-        { "id": "TK56", "label": "Tank 56", "safeFill": 43974, "heel": 4407 },
-        { "id": "TK03", "label": "Tank 03", "safeFill": 14428, "heel": 1313 }
+        { "id": "TK55", "label": "Tank 55", "safeFill": 56851, "heel": 6458 },
+        { "id": "TK56", "label": "Tank 56", "safeFill": 48382, "heel": 4407 },
+        { "id": "TK03", "label": "Tank 03", "safeFill": 15742, "heel": 1313 }
       ]
     },
     "premium": {
