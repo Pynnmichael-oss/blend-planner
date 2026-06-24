@@ -2,19 +2,22 @@ import { useEffect } from 'react';
 import VerticalTankGauge from '../blendplanner/InventoryBar';
 
 const C = {
-  bg:     '#0a0c12',
-  border: '#1e293b',
-  text:   '#f1f5f9',
-  muted:  '#64748b',
-  amber:  '#f59e0b',
-  blue:   '#60a5fa',
-  red:    '#ef4444',
+  bg:       '#EEF3F6',
+  panel:    '#FFFFFF',
+  border:   'rgba(0,79,113,.13)',
+  borderEm: 'rgba(0,79,113,.25)',
+  text:     '#063A52',
+  muted:    '#5E7A8A',
+  amber:    '#00B398',
+  blue:     '#004F71',
+  red:      '#D9655B',
+  green:    '#0a7e62',
 };
 
 const inputBase = {
-  backgroundColor: C.bg, color: C.text,
-  border: `1px solid ${C.border}`, borderRadius: '3px',
-  padding: '2px 5px', fontFamily: 'monospace', fontSize: '11px',
+  backgroundColor: '#EEF3F6', color: C.text,
+  border: `1px solid ${C.border}`, borderRadius: '6px',
+  padding: '2px 5px', fontFamily: "'Montserrat',sans-serif", fontSize: '11px',
   textAlign: 'right',
 };
 
@@ -33,7 +36,6 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
   const specInputBase = {
     ...inputBase,
     width: '56px',
-    border: `1px solid ${C.border}`,
   };
 
   return (
@@ -41,9 +43,9 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
       <thead>
         <tr style={{ color: C.muted }}>
-          <th style={{ textAlign: 'left',  padding: '2px 4px', fontWeight: 'normal', fontSize: '10px' }}>Tank</th>
-          <th style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 'normal', fontSize: '10px' }}>bbl</th>
-          <th style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 'normal', fontSize: '10px' }}>RVP</th>
+          <th style={{ textAlign: 'left',  padding: '2px 4px', fontWeight: 'normal', fontSize: '10px', fontFamily: "'Montserrat',sans-serif" }}>Tank</th>
+          <th style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 'normal', fontSize: '10px', fontFamily: "'Montserrat',sans-serif" }}>bbl</th>
+          <th style={{ textAlign: 'right', padding: '2px 4px', fontWeight: 'normal', fontSize: '10px', fontFamily: "'Montserrat',sans-serif" }}>RVP</th>
         </tr>
       </thead>
       <tbody>
@@ -55,8 +57,8 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
                 colSpan={3}
                 style={{
                   paddingTop: '10px', paddingBottom: '3px', paddingLeft: '4px',
-                  fontSize: '9px', color: C.amber, fontWeight: '600',
-                  textTransform: 'uppercase', letterSpacing: '0.08em',
+                  fontSize: '9px', color: '#004F71', fontWeight: '600',
+                  textTransform: 'uppercase', letterSpacing: '1.4px',
                 }}
               >
                 {product.label}
@@ -91,7 +93,7 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
                       step="0.1"
                       value={inv.rvp}
                       onChange={e => handleChange(tank.id, 'rvp', e.target.value)}
-                      style={{ ...inputBase, width: '48px', color: C.blue }}
+                      style={{ ...inputBase, width: '48px', color: '#004F71' }}
                     />
                   </td>
                 </tr>
@@ -104,7 +106,7 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
 
     {/* Blend spec controls */}
     <div style={{ borderTop: `1px solid ${C.border}`, marginTop: '10px', paddingTop: '10px' }}>
-      <div style={{ fontSize: '9px', color: C.amber, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+      <div style={{ fontSize: '9px', color: '#004F71', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1.4px', marginBottom: '8px' }}>
         Blend Spec
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -115,7 +117,7 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
             value={specCeiling}
             onChange={e => setSpecCeiling(parseFloat(e.target.value) || 9.0)}
             className="font-mono"
-            style={{ ...specInputBase, color: C.red }}
+            style={{ ...specInputBase, color: '#D9655B' }}
           />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -125,7 +127,7 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
             value={blendTarget}
             onChange={e => setBlendTarget(parseFloat(e.target.value) || 8.75)}
             className="font-mono"
-            style={{ ...specInputBase, color: C.blue }}
+            style={{ ...specInputBase, color: '#004F71' }}
           />
         </div>
       </div>

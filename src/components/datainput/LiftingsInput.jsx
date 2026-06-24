@@ -17,8 +17,16 @@ const WEEKDAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Frida
 const WEEKDAY_ABBR  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const C = {
-  bg: '#0a0c12', panel: '#111827', border: '#1e293b',
-  text: '#f1f5f9', muted: '#64748b', amber: '#f59e0b',
+  bg:       '#EEF3F6',
+  panel:    '#FFFFFF',
+  border:   'rgba(0,79,113,.13)',
+  borderEm: 'rgba(0,79,113,.25)',
+  text:     '#063A52',
+  muted:    '#5E7A8A',
+  amber:    '#00B398',
+  blue:     '#004F71',
+  red:      '#D9655B',
+  green:    '#0a7e62',
 };
 
 function utcWeekdayName(dateStr) {
@@ -44,10 +52,12 @@ function shortDate(dateStr) {
 const thStyle = {
   padding: '4px 8px', fontSize: '10px', color: C.muted, fontWeight: 'normal',
   borderBottom: `1px solid ${C.border}`, textAlign: 'left', whiteSpace: 'nowrap',
+  fontFamily: "'Montserrat',sans-serif",
 };
 const tdStyle = {
   padding: '3px 8px', fontSize: '11px', color: C.text,
   borderBottom: `0.5px solid ${C.border}`, whiteSpace: 'nowrap',
+  fontFamily: "'Montserrat',sans-serif",
 };
 
 export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChange, planDays, startDate }) {
@@ -128,24 +138,24 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
 
   const inputStyle = {
     width: '72px', textAlign: 'right', fontSize: '11px',
-    backgroundColor: C.bg, color: C.text, border: `1px solid ${C.border}`,
-    borderRadius: '3px', padding: '2px 4px',
+    backgroundColor: '#EEF3F6', color: C.text, border: `1px solid ${C.border}`,
+    borderRadius: '9px', padding: '2px 4px', fontFamily: "'Montserrat',sans-serif",
   };
 
   return (
     <div>
-      <div style={{ fontSize: '10px', color: C.amber, fontWeight: 'bold', letterSpacing: '0.07em', marginBottom: '10px', textTransform: 'uppercase' }}>
+      <div style={{ fontSize: '10px', color: '#004F71', fontWeight: 'bold', letterSpacing: '0.07em', marginBottom: '10px', textTransform: 'uppercase' }}>
         Rack Liftings
       </div>
 
       {/* TOP: Weekly base rate */}
       <div style={{
-        backgroundColor: C.panel, border: `1px solid ${C.border}`, borderRadius: '6px',
+        backgroundColor: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: '12px',
         padding: '10px 12px', marginBottom: '14px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '11px', color: C.muted }}>Regular</span>
+            <span style={{ fontSize: '11px', color: C.muted, fontFamily: "'Montserrat',sans-serif" }}>Regular</span>
             <input
               type="number"
               value={baseReg}
@@ -153,11 +163,11 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
               className="font-mono"
               style={inputStyle}
             />
-            <span style={{ fontSize: '11px', color: C.muted }}>bbl/day</span>
+            <span style={{ fontSize: '11px', color: C.muted, fontFamily: "'Montserrat',sans-serif" }}>bbl/day</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '11px', color: C.muted }}>Premium</span>
+            <span style={{ fontSize: '11px', color: C.muted, fontFamily: "'Montserrat',sans-serif" }}>Premium</span>
             <input
               type="number"
               value={basePrem}
@@ -165,21 +175,22 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
               className="font-mono"
               style={inputStyle}
             />
-            <span style={{ fontSize: '11px', color: C.muted }}>bbl/day</span>
+            <span style={{ fontSize: '11px', color: C.muted, fontFamily: "'Montserrat',sans-serif" }}>bbl/day</span>
           </div>
 
           <button
             onClick={handleApply}
             style={{
-              padding: '3px 14px', fontSize: '11px', fontWeight: 'bold',
-              backgroundColor: C.amber, color: '#000',
-              border: 'none', borderRadius: '3px', cursor: 'pointer',
+              padding: '3px 14px', fontSize: '11px', fontWeight: 700,
+              backgroundColor: '#004F71', color: '#FFFFFF',
+              border: 'none', borderRadius: '9px', cursor: 'pointer',
+              fontFamily: "'Montserrat',sans-serif",
             }}
           >
             Apply
           </button>
         </div>
-        <div style={{ fontSize: '10px', color: C.muted, marginTop: '6px' }}>
+        <div style={{ fontSize: '10px', color: C.muted, marginTop: '6px', fontFamily: "'Montserrat',sans-serif" }}>
           Curve distributes across days and time slots automatically
         </div>
       </div>
@@ -191,7 +202,7 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
             <th style={thStyle}>Day</th>
             <th style={{ ...thStyle, paddingRight: '16px' }}>Date</th>
             {productKeys.map(pk => (
-              <th key={pk} style={{ ...thStyle, color: C.amber }}>
+              <th key={pk} style={{ ...thStyle, color: '#004F71' }}>
                 {terminalConfig.products[pk].label}
               </th>
             ))}
@@ -215,8 +226,9 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
                       className="font-mono"
                       style={{
                         ...inputStyle,
-                        color:  isOverride ? C.amber : C.text,
-                        border: `1px solid ${isOverride ? C.amber : C.border}`,
+                        borderRadius: '6px',
+                        color:  isOverride ? '#00B398' : C.text,
+                        border: `1px solid ${isOverride ? '#00B398' : C.border}`,
                       }}
                     />
                   </td>
@@ -231,8 +243,9 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
         onClick={handleReset}
         style={{
           marginTop: '10px', fontSize: '11px', padding: '2px 8px',
-          backgroundColor: C.panel, color: C.muted,
-          border: `1px solid ${C.border}`, borderRadius: '3px', cursor: 'pointer',
+          backgroundColor: '#FFFFFF', color: C.muted,
+          border: `1px solid ${C.border}`, borderRadius: '9px', cursor: 'pointer',
+          fontFamily: "'Montserrat',sans-serif",
         }}
       >
         Reset to curve defaults

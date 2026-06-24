@@ -8,16 +8,23 @@ const GRADE_RVP_DEFAULTS = {
 const GRADES = ['4C', '4D', '3C', '3D'];
 
 const C = {
-  bg: '#0a0c12', panel: '#0f1117',
-  border: '#1e293b', borderEm: '#2a2d3a',
-  text: '#f1f5f9', muted: '#64748b',
-  amber: '#f59e0b', blue: '#60a5fa', red: '#ef4444', green: '#22c55e',
+  bg:       '#EEF3F6',
+  panel:    '#FFFFFF',
+  border:   'rgba(0,79,113,.13)',
+  borderEm: 'rgba(0,79,113,.25)',
+  text:     '#063A52',
+  muted:    '#5E7A8A',
+  amber:    '#00B398',
+  blue:     '#004F71',
+  red:      '#D9655B',
+  green:    '#0a7e62',
 };
 
 const thSt = {
   padding: '3px 6px', fontSize: '9px', color: C.muted, fontWeight: 'normal',
-  borderBottom: `1px solid ${C.borderEm}`, textAlign: 'left', whiteSpace: 'nowrap',
-  position: 'sticky', top: 0, zIndex: 2, backgroundColor: C.panel,
+  borderBottom: `1px solid ${C.border}`, textAlign: 'left', whiteSpace: 'nowrap',
+  position: 'sticky', top: 0, zIndex: 2, backgroundColor: '#FFFFFF',
+  fontFamily: "'Montserrat',sans-serif",
 };
 
 const tdSt = {
@@ -25,6 +32,7 @@ const tdSt = {
   whiteSpace: 'nowrap', verticalAlign: 'middle',
   borderBottom: `1px solid ${C.border}`,
   overflow: 'hidden', fontSize: '10px',
+  fontFamily: "'Montserrat',sans-serif",
 };
 
 export default function T4PasteInput({
@@ -109,18 +117,19 @@ export default function T4PasteInput({
           placeholder="Paste T4 data and press Parse"
           style={{
             flex: 1, height: '30px', boxSizing: 'border-box',
-            backgroundColor: C.bg, color: C.text,
-            border: `1px solid ${C.borderEm}`, borderRadius: '3px',
+            backgroundColor: '#FFFFFF', color: C.text,
+            border: `1px solid ${C.border}`, borderRadius: '9px',
             padding: '0 8px', fontSize: '11px',
-            fontFamily: 'monospace', outline: 'none',
+            fontFamily: "'Montserrat',sans-serif", outline: 'none',
           }}
         />
         <button
           onClick={() => doParse(rawText)}
           style={{
             flexShrink: 0, height: '30px', padding: '0 16px', fontSize: '12px',
-            backgroundColor: C.amber, color: '#000', border: 'none',
-            borderRadius: '3px', cursor: 'pointer', fontWeight: 'bold',
+            backgroundColor: '#004F71', color: '#FFFFFF', border: 'none',
+            borderRadius: '9px', cursor: 'pointer', fontWeight: 700,
+            fontFamily: "'Montserrat',sans-serif",
           }}
         >
           Parse
@@ -148,7 +157,7 @@ export default function T4PasteInput({
 
             {/* Summary */}
             <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '9px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '8px' }}>
+              <div style={{ fontSize: '9px', color: C.blue, textTransform: 'uppercase', letterSpacing: '1.4px', fontWeight: 700, marginBottom: '8px' }}>
                 RVP Status
               </div>
               {parsedReceipts ? (
@@ -171,7 +180,7 @@ export default function T4PasteInput({
 
             {/* Grade defaults */}
             <div>
-              <div style={{ fontSize: '9px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '8px' }}>
+              <div style={{ fontSize: '9px', color: C.blue, textTransform: 'uppercase', letterSpacing: '1.4px', fontWeight: 700, marginBottom: '8px' }}>
                 Grade Defaults
               </div>
               {GRADES.map(grade => {
@@ -180,11 +189,12 @@ export default function T4PasteInput({
                   ? parsedReceipts.filter(r => r.grade === grade && !rvpConfirmed[r.batchCode]).length
                   : 0;
                 const isReg = ['4C', '4D'].includes(grade);
+                const active = parsedReceipts && affectedCount > 0;
                 return (
                   <div key={grade} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
                     <span style={{
-                      fontSize: '10px', fontFamily: 'monospace', fontWeight: 600,
-                      color: isReg ? C.green : C.blue, width: '24px', flexShrink: 0,
+                      fontSize: '10px', fontFamily: "'Montserrat',sans-serif", fontWeight: 600,
+                      color: isReg ? C.amber : C.blue, width: '24px', flexShrink: 0,
                     }}>
                       {grade}
                     </span>
@@ -198,22 +208,22 @@ export default function T4PasteInput({
                       }}
                       style={{
                         width: '56px', flexShrink: 0, fontSize: '11px', textAlign: 'right',
-                        backgroundColor: C.bg, color: C.text,
-                        border: `1px solid ${C.borderEm}`, borderRadius: '3px',
-                        padding: '2px 5px', fontFamily: 'monospace',
+                        backgroundColor: '#EEF3F6', color: C.text,
+                        border: `1px solid ${C.border}`, borderRadius: '6px',
+                        padding: '2px 5px', fontFamily: "'Montserrat',sans-serif",
                       }}
                     />
                     <button
                       onClick={() => applyGradeDefault(grade)}
-                      disabled={!parsedReceipts || affectedCount === 0}
+                      disabled={!active}
                       style={{
                         flex: 1, padding: '2px 0', fontSize: '9px',
                         backgroundColor: 'transparent',
-                        color: parsedReceipts && affectedCount > 0 ? C.muted : C.border,
-                        border: `1px solid ${parsedReceipts && affectedCount > 0 ? C.borderEm : C.border}`,
+                        color: active ? C.muted : 'rgba(0,79,113,.2)',
+                        border: `1px solid ${active ? C.borderEm : C.border}`,
                         borderRadius: '3px',
-                        cursor: parsedReceipts && affectedCount > 0 ? 'pointer' : 'not-allowed',
-                        fontFamily: 'monospace', whiteSpace: 'nowrap',
+                        cursor: active ? 'pointer' : 'not-allowed',
+                        fontFamily: "'Montserrat',sans-serif", whiteSpace: 'nowrap',
                       }}
                     >
                       → all EST
@@ -230,11 +240,12 @@ export default function T4PasteInput({
               onClick={handleApply}
               disabled={!parsedReceipts}
               style={{
-                width: '100%', padding: '9px 0', fontSize: '13px', fontWeight: 'bold',
-                backgroundColor: parsedReceipts ? C.green : C.border,
-                color: parsedReceipts ? '#000' : C.muted,
-                border: 'none', borderRadius: '4px',
+                width: '100%', padding: '9px 0', fontSize: '13px', fontWeight: 700,
+                backgroundColor: parsedReceipts ? '#004F71' : C.border,
+                color: parsedReceipts ? '#FFFFFF' : C.muted,
+                border: 'none', borderRadius: '9px',
                 cursor: parsedReceipts ? 'pointer' : 'not-allowed',
+                fontFamily: "'Montserrat',sans-serif",
               }}
             >
               Apply to Plan
@@ -243,7 +254,7 @@ export default function T4PasteInput({
         </div>
 
         {/* RIGHT PANEL — batch table */}
-        <div style={{ flex: 1, overflowY: 'auto', backgroundColor: C.bg }}>
+        <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#FFFFFF' }}>
           {parsedReceipts ? (
             <table style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' }}>
               <colgroup>
@@ -268,31 +279,31 @@ export default function T4PasteInput({
                   const rvp         = rvpValues[r.batchCode];
                   const rvpSet      = rvp !== null && rvp !== undefined;
                   const isConfirmed = rvpConfirmed[r.batchCode] === true;
-                  const accentColor = isConfirmed ? C.blue : C.amber;
+                  const accentColor = isConfirmed ? '#004F71' : '#00B398';
                   return (
                     <tr
                       key={r.batchCode}
-                      style={{ backgroundColor: C.bg, borderLeft: `3px solid ${accentColor}` }}
+                      style={{ backgroundColor: '#FFFFFF', borderLeft: `3px solid ${accentColor}` }}
                     >
-                      <td style={{ ...tdSt, fontFamily: 'monospace', color: C.muted }}>
+                      <td style={{ ...tdSt, color: C.muted }}>
                         {r.startDatetime.slice(0, 16).replace('T', ' ')}
                       </td>
-                      <td style={{ ...tdSt, fontFamily: 'monospace', color: C.text, textOverflow: 'ellipsis' }}>
+                      <td style={{ ...tdSt, color: C.text, textOverflow: 'ellipsis' }}>
                         {r.batchCode}
                       </td>
                       <td style={{ ...tdSt, color: C.muted }}>{r.supplier}</td>
                       <td style={{ ...tdSt, color: C.muted }}>{r.line}</td>
-                      <td style={{ ...tdSt, fontFamily: 'monospace' }}>{r.grade}</td>
+                      <td style={{ ...tdSt }}>{r.grade}</td>
                       <td style={tdSt}>
                         <span style={{
                           fontSize: '9px', padding: '1px 3px', borderRadius: '3px',
-                          backgroundColor: r.product === 'regular' ? '#1a2e22' : '#1a2035',
-                          color: r.product === 'regular' ? C.green : C.blue,
+                          backgroundColor: r.product === 'regular' ? 'rgba(0,179,152,.12)' : 'rgba(0,79,113,.10)',
+                          color: r.product === 'regular' ? '#0a7e62' : '#004F71',
                         }}>
                           {r.product === 'regular' ? 'REG' : 'PRM'}
                         </span>
                       </td>
-                      <td style={{ ...tdSt, fontFamily: 'monospace', textAlign: 'right' }}>
+                      <td style={{ ...tdSt, textAlign: 'right' }}>
                         {r.volume.toLocaleString()}
                       </td>
                       <td style={{ ...tdSt, padding: '0 3px' }}>
@@ -305,11 +316,11 @@ export default function T4PasteInput({
                           onChange={e => handleRvpChange(r.batchCode, e.target.value)}
                           style={{
                             width: '56px', fontSize: '11px', textAlign: 'right',
-                            backgroundColor: C.bg, color: C.text,
+                            backgroundColor: '#EEF3F6', color: C.text,
                             border: `1px solid ${C.border}`,
                             borderLeft: `4px solid ${accentColor}`,
-                            borderRadius: '3px', padding: '1px 3px',
-                            fontFamily: 'monospace', outline: 'none',
+                            borderRadius: '6px', padding: '1px 3px',
+                            fontFamily: "'Montserrat',sans-serif", outline: 'none',
                           }}
                         />
                       </td>
