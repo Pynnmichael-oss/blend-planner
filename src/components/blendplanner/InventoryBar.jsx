@@ -4,11 +4,13 @@
  */
 
 const STATUS_FILL = {
-  BLEND:    { color: '#ef4444', opacity: 0.6 },
-  RACK:     { color: '#378ADD', opacity: 1   },
-  RECEIPT:  { color: '#f59e0b', opacity: 1   },
-  IDLE:     { color: '#475569', opacity: 1   },
-  CONFLICT: { color: '#f59e0b', opacity: 1   },
+  BLEND:      { color: '#D9655B', opacity: 0.7 },
+  RACK:       { color: '#00B398', opacity: 1   },
+  RECEIPT:    { color: '#004F71', opacity: 0.7 },
+  IDLE:       { color: '#9DB0BC', opacity: 1   },
+  CONFLICT:   { color: '#E0A23C', opacity: 1   },
+  OVERFILL:   { color: '#C0882E', opacity: 1   },
+  'RACK+RCV': { color: '#00B398', opacity: 1   },
 };
 
 export default function VerticalTankGauge({ fillPct, status, height = 48, width = 16 }) {
@@ -16,9 +18,9 @@ export default function VerticalTankGauge({ fillPct, status, height = 48, width 
 
   let fillColor, fillOpacity = 1;
   if (pct > 0.95) {
-    fillColor = '#f59e0b';
+    fillColor = '#C0882E';
   } else if (pct < 0.15) {
-    fillColor = '#ef4444';
+    fillColor = '#D9655B';
   } else {
     const s = STATUS_FILL[status] ?? STATUS_FILL.IDLE;
     fillColor   = s.color;
@@ -28,9 +30,9 @@ export default function VerticalTankGauge({ fillPct, status, height = 48, width 
   return (
     <div style={{
       width, height, position: 'relative',
-      backgroundColor: '#0f172a',
-      borderRadius: '2px 2px 0 0',
-      border: '0.5px solid #334155',
+      backgroundColor: '#E5ECF0',
+      borderRadius: '3px 3px 0 0',
+      border: '0.5px solid rgba(0,79,113,.2)',
       overflow: 'hidden', flexShrink: 0,
     }}>
       <div style={{

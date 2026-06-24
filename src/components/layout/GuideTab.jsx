@@ -1,15 +1,22 @@
 const C = {
-  bg: '#0a0c12', panel: '#0f1117', border: '#1e293b',
-  text: '#f1f5f9', muted: '#64748b', secondary: '#94a3b8',
-  amber: '#f59e0b', blue: '#60a5fa', red: '#ef4444', green: '#22c55e',
+  bg:        '#EEF3F6',
+  panel:     '#FFFFFF',
+  border:    'rgba(0,79,113,.13)',
+  text:      '#063A52',
+  muted:     '#5E7A8A',
+  secondary: '#5E7A8A',
+  amber:     '#00B398',
+  blue:      '#004F71',
+  red:       '#D9655B',
+  green:     '#0a7e62',
 };
 
 function Section({ title, children }) {
   return (
     <section style={{ marginBottom: '40px' }}>
       <h2 style={{
-        fontFamily: 'monospace', fontSize: '11px', fontWeight: 600,
-        color: C.amber, textTransform: 'uppercase', letterSpacing: '0.1em',
+        fontFamily: "'Montserrat',sans-serif", fontSize: '11px', fontWeight: 700,
+        color: '#004F71', textTransform: 'uppercase', letterSpacing: '1.4px',
         marginBottom: '14px', paddingBottom: '8px',
         borderBottom: `1px solid ${C.border}`,
       }}>
@@ -36,16 +43,16 @@ function Step({ n, label, children }) {
     <div style={{ display: 'flex', gap: '14px', marginBottom: '16px' }}>
       <div style={{
         flexShrink: 0, width: '22px', height: '22px',
-        borderRadius: '50%', backgroundColor: C.panel,
-        border: `1px solid ${C.amber}`, color: C.amber,
-        fontSize: '11px', fontWeight: 600, fontFamily: 'monospace',
+        borderRadius: '50%', backgroundColor: '#FFFFFF',
+        border: '1px solid #00B398', color: '#00B398',
+        fontSize: '11px', fontWeight: 600, fontFamily: "'Montserrat',sans-serif",
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         marginTop: '2px',
       }}>
         {n}
       </div>
       <div>
-        <div style={{ fontSize: '12px', fontWeight: 600, color: C.text, marginBottom: '4px' }}>{label}</div>
+        <div style={{ fontSize: '12px', fontWeight: 600, color: C.text, marginBottom: '4px', fontFamily: "'Montserrat',sans-serif" }}>{label}</div>
         <P style={{ marginBottom: 0 }}>{children}</P>
       </div>
     </div>
@@ -55,8 +62,8 @@ function Step({ n, label, children }) {
 function Badge({ label, bg, color }) {
   return (
     <span style={{
-      display: 'inline-block', padding: '2px 8px', borderRadius: '3px',
-      fontSize: '10px', fontFamily: 'monospace', fontWeight: 600,
+      display: 'inline-block', padding: '2px 8px', borderRadius: '5px',
+      fontSize: '10px', fontFamily: "'Montserrat',sans-serif", fontWeight: 700,
       backgroundColor: bg, color: color, marginRight: '6px',
     }}>
       {label}
@@ -79,10 +86,10 @@ export default function GuideTab() {
       <div style={{ maxWidth: '780px', margin: '0 auto', padding: '36px 28px 60px' }}>
 
         <div style={{ marginBottom: '36px' }}>
-          <div style={{ fontSize: '10px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>
+          <div style={{ fontSize: '10px', color: '#00B398', textTransform: 'uppercase', letterSpacing: '1.4px', marginBottom: '8px', fontFamily: "'Montserrat',sans-serif" }}>
             Blend Planner
           </div>
-          <h1 style={{ fontFamily: 'monospace', fontSize: '20px', color: C.text, fontWeight: 600, margin: 0 }}>
+          <h1 style={{ fontFamily: "'Montserrat',sans-serif", fontSize: '20px', color: '#004F71', fontWeight: 800, margin: 0 }}>
             Operator Guide
           </h1>
         </div>
@@ -139,17 +146,17 @@ export default function GuideTab() {
           </P>
 
           <div style={{ marginBottom: '16px' }}>
-            <StatusRow badge="IDLE" bg="#1e293b" color="#64748b">
+            <StatusRow badge="IDLE" bg="rgba(0,79,113,.07)" color="#5E7A8A">
               No activity. Tank is neither receiving product nor actively racking. Inventory stays flat minus any minor evaporation (not modelled). Most cells outside peak lifting hours will be IDLE.
             </StatusRow>
-            <StatusRow badge="RACK" bg="#166534" color="#dcfce7">
-              Tank is supplying the rack during this window. Inventory decreases by the lifting volume. The fill gauge turns blue. Normal operating state for tanks in the active product pool.
+            <StatusRow badge="RACK" bg="rgba(0,179,152,.14)" color="#0a7e62">
+              Tank is supplying the rack during this window. Inventory decreases by the lifting volume. The fill gauge turns teal. Normal operating state for tanks in the active product pool.
             </StatusRow>
-            <StatusRow badge="RECEIPT" bg="#92400e" color="#fef3c7">
-              Pipeline product is arriving and being received. Inventory increases. RVP changes depending on the incoming batch quality versus the current tank blend. The fill gauge turns amber.
+            <StatusRow badge="RECEIPT" bg="rgba(0,79,113,.10)" color="#004F71">
+              Pipeline product is arriving and being received. Inventory increases. RVP changes depending on the incoming batch quality versus the current tank blend. The fill gauge turns navy.
             </StatusRow>
-            <StatusRow badge="BLEND" bg="#7f1d1d" color="#fca5a5">
-              Tank is offline for butane blending. It will not supply the rack this period. Inventory increases by butane addition. Fill gauge turns red. The cell background is dark red with a left border accent. The word OFFLINE appears below inventory.
+            <StatusRow badge="BLEND" bg="rgba(217,101,91,.15)" color="#D9655B">
+              Tank is offline for butane blending. It will not supply the rack this period. Inventory increases by butane addition. Fill gauge turns coral. The cell background is tinted red with a left border accent. The word OFFLINE appears below inventory.
             </StatusRow>
           </div>
 
@@ -157,7 +164,7 @@ export default function GuideTab() {
             The vertical gauge in each cell header shows fill percentage at the start of the period (opening fill). The gauge in the cell body shows closing fill. Amber means the tank is approaching safe fill (&gt;95%). Red means the tank is approaching heel (&lt;15%).
           </P>
           <P>
-            RVP is displayed in blue below the closing inventory figure. Values in the 7.0–8.5 range are typical for summer blends. A drop below 7.0 may indicate a quality issue with an incoming batch; a value above 9.0 may suggest insufficient blending before racking.
+            RVP is displayed in navy below the closing inventory figure. Values in the 7.0–8.5 range are typical for summer blends. A drop below 7.0 may indicate a quality issue with an incoming batch; a value above 9.0 may suggest insufficient blending before racking.
           </P>
         </Section>
 
