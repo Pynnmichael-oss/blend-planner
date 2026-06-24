@@ -17,8 +17,8 @@ const WEEKDAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Frida
 const WEEKDAY_ABBR  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const C = {
-  bg:       '#EEF3F6',
-  panel:    '#FFFFFF',
+  bg:       '#FFFFFF',
+  panel:    '#EEF3F6',
   border:   'rgba(0,79,113,.13)',
   borderEm: 'rgba(0,79,113,.25)',
   text:     '#063A52',
@@ -138,7 +138,7 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
 
   const inputStyle = {
     width: '72px', textAlign: 'right', fontSize: '11px',
-    backgroundColor: '#EEF3F6', color: C.text, border: `1px solid ${C.border}`,
+    backgroundColor: '#FFFFFF', color: C.text, border: `1px solid ${C.border}`,
     borderRadius: '9px', padding: '2px 4px', fontFamily: "'Montserrat',sans-serif",
   };
 
@@ -150,7 +150,7 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
 
       {/* TOP: Weekly base rate */}
       <div style={{
-        backgroundColor: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: '12px',
+        backgroundColor: '#EEF3F6', border: `1px solid ${C.border}`, borderRadius: '12px',
         padding: '10px 12px', marginBottom: '14px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
@@ -243,7 +243,7 @@ export default function LiftingsInput({ terminalConfig, liftings, onLiftingsChan
         onClick={handleReset}
         style={{
           marginTop: '10px', fontSize: '11px', padding: '2px 8px',
-          backgroundColor: '#FFFFFF', color: C.muted,
+          backgroundColor: '#EEF3F6', color: C.muted,
           border: `1px solid ${C.border}`, borderRadius: '9px', cursor: 'pointer',
           fontFamily: "'Montserrat',sans-serif",
         }}

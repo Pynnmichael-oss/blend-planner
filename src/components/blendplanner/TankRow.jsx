@@ -4,11 +4,11 @@
 import VerticalTankGauge from './InventoryBar';
 
 const C = {
-  bg:          '#FFFFFF',
+  bg:          '#EEF3F6',
   blendBg:     'rgba(217,101,91,.08)',
   conflictBg:  'rgba(224,162,60,.08)',
   overfillBg:  'rgba(124,58,237,.08)',
-  border:      'rgba(0,79,113,.13)',
+  border:      'rgba(0,79,113,.20)',
   text:        '#063A52',
   muted:       '#5E7A8A',
   amber:       '#00B398',
@@ -45,8 +45,9 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
     <tr>
       {/* ── Row header ─── */}
       <td style={{
-        padding: '6px 8px', backgroundColor: '#FFFFFF',
-        borderBottom: `0.5px solid ${C.border}`, borderRight: `0.5px solid ${C.border}`,
+        padding: '6px 8px', backgroundColor: '#EEF3F6',
+        borderBottom: `0.5px solid ${C.border}`,
+        borderRight: '2px solid rgba(0,79,113,.15)',
         verticalAlign: 'middle', whiteSpace: 'nowrap', position: 'sticky', left: 0, zIndex: 1,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -59,7 +60,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
       {periods.map((p) => {
         const entry    = cells?.[p.key];
         const dayIndex = dateIndexMap?.[p.date] ?? 0;
-        const dayBg    = dayIndex % 2 === 0 ? '#EEF3F6' : '#F5F8FA';
+        const dayBg    = dayIndex % 2 === 0 ? '#FFFFFF' : '#F5F8FA';
 
         if (!entry) {
           return (
@@ -98,7 +99,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             <div style={{ marginBottom: '3px' }}>
               <span
                 style={{
-                  fontSize: '9px', padding: '2px 6px', borderRadius: '5px',
+                  fontSize: '10px', padding: '3px 8px', borderRadius: '5px',
                   backgroundColor: badge.bg, color: badge.color,
                   fontFamily: "'Montserrat',sans-serif", fontWeight: 700,
                   userSelect: 'none', display: 'inline-block',
@@ -114,7 +115,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
                 onClick={e => { e.stopPropagation(); toggleBlend(tank.id, entry.date, entry.timeSlot); }}
                 title={entry.blendActive ? 'Remove blend' : 'Set blend'}
                 style={{
-                  fontSize: '8px', padding: '1px 5px', borderRadius: '3px',
+                  fontSize: '9px', padding: '1px 5px', borderRadius: '3px',
                   backgroundColor: entry.blendActive ? 'rgba(217,101,91,.15)' : 'rgba(0,79,113,.07)',
                   color: entry.blendActive ? '#D9655B' : '#9DB0BC',
                   fontFamily: "'Montserrat',sans-serif", cursor: 'pointer', userSelect: 'none',
@@ -126,7 +127,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
                 onClick={e => { e.stopPropagation(); onToggleIdle(tank.id, entry.date, entry.timeSlot); }}
                 title={entry.manualIdle ? 'Remove idle' : 'Force idle'}
                 style={{
-                  fontSize: '8px', padding: '1px 5px', borderRadius: '3px',
+                  fontSize: '9px', padding: '1px 5px', borderRadius: '3px',
                   backgroundColor: entry.manualIdle ? 'rgba(0,79,113,.12)' : 'rgba(0,79,113,.07)',
                   color: entry.manualIdle ? '#004F71' : '#9DB0BC',
                   fontFamily: "'Montserrat',sans-serif", cursor: 'pointer', userSelect: 'none',
@@ -143,12 +144,12 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             </div>
 
             {/* Closing inventory */}
-            <div className="font-mono" style={{ fontSize: '11px', color: invColor, lineHeight: 1.3 }}>
+            <div className="font-mono" style={{ fontSize: '12px', fontWeight: 600, color: invColor, lineHeight: 1.3 }}>
               {Math.round(entry.closingInventory).toLocaleString()} bbl
             </div>
 
             {/* RVP */}
-            <div className="font-mono" style={{ fontSize: '10px', color: '#004F71', lineHeight: 1.3 }}>
+            <div className="font-mono" style={{ fontSize: '11px', fontWeight: 700, color: '#004F71', lineHeight: 1.3 }}>
               RVP {entry.closingRVP.toFixed(3)}
             </div>
 

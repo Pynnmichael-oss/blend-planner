@@ -11,10 +11,10 @@ const DAY_OPTIONS = [3, 5, 8];
 const TABS        = ['PLAN', 'RECEIPTS', 'LIFTINGS', 'SUMMARY', 'GUIDE'];
 
 const C = {
-  pageBg:    '#EEF3F6',
-  headerBg:  '#FFFFFF',
-  sidebar:   '#FFFFFF',
-  panel:     '#FFFFFF',
+  pageBg:    '#FFFFFF',
+  headerBg:  '#EEF3F6',
+  sidebar:   '#EEF3F6',
+  panel:     '#EEF3F6',
   border:    'rgba(0,79,113,.13)',
   borderEm:  'rgba(0,79,113,.25)',
   text:      '#063A52',
@@ -29,7 +29,6 @@ const C = {
 };
 
 const SIDEBAR_W = 300;
-const HEADER_H  = 48;
 
 const labelStyle = {
   fontSize: '10px', color: '#5E7A8A', textTransform: 'uppercase',
@@ -37,7 +36,7 @@ const labelStyle = {
 };
 
 const selectStyle = {
-  backgroundColor: '#EEF3F6', color: '#063A52', border: '1px solid rgba(0,79,113,.13)',
+  backgroundColor: '#FFFFFF', color: '#063A52', border: '1px solid rgba(0,79,113,.13)',
   borderRadius: '9px', padding: '5px 12px', fontSize: '12px',
   fontFamily: "'Montserrat',sans-serif", fontWeight: 600, outline: 'none', cursor: 'pointer',
 };
@@ -50,7 +49,7 @@ function SidebarSection({ label, open, onToggle, children }) {
         style={{
           width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer',
-          color: '#004F71', fontSize: '10px', fontWeight: 700,
+          color: '#004F71', fontSize: '11px', fontWeight: 700,
           letterSpacing: '1.4px', textTransform: 'uppercase',
           borderBottom: '1px solid rgba(0,79,113,.13)',
         }}
@@ -96,119 +95,134 @@ export default function AppShell({
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <header style={{
-        height: HEADER_H, flexShrink: 0,
-        backgroundColor: '#FFFFFF',
-        borderBottom: '1px solid rgba(0,79,113,.13)',
-        display: 'flex', alignItems: 'center', gap: '14px', padding: '0 20px',
+        flexShrink: 0,
+        backgroundColor: C.headerBg,
         position: 'sticky', top: 0, zIndex: 50,
       }}>
 
-        {/* Wordmark */}
-        <div style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 800, fontSize: '19px', letterSpacing: '.5px', color: '#004F71', lineHeight: '.96' }}>
-          GLOBAL<span style={{ display: 'block', fontWeight: 700, fontSize: '10px', letterSpacing: '3.5px', color: '#00B398', marginTop: '2px' }}>PARTNERS</span>
-        </div>
+        {/* Row 1: wordmark + core controls */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '14px',
+          padding: '10px 20px', borderBottom: '1px solid rgba(0,79,113,.08)',
+        }}>
+          {/* Wordmark */}
+          <div style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 800, fontSize: '19px', letterSpacing: '.5px', color: '#004F71', lineHeight: '.96' }}>
+            GLOBAL<span style={{ display: 'block', fontWeight: 700, fontSize: '10px', letterSpacing: '3.5px', color: '#00B398', marginTop: '2px' }}>PARTNERS</span>
+          </div>
 
-        {/* Divider */}
-        <div style={{ width: '1px', height: '30px', background: 'rgba(0,79,113,.13)' }} />
+          {/* Divider */}
+          <div style={{ width: '1px', height: '30px', background: 'rgba(0,79,113,.13)' }} />
 
-        {/* Page name */}
-        <div style={{ fontWeight: 700, fontSize: '14px', letterSpacing: '.4px', color: '#004F71' }}>
-          Blend Planner <span style={{ color: '#5E7A8A', fontWeight: 500 }}>· Fort Worth</span>
-        </div>
+          {/* Page name */}
+          <div style={{ fontWeight: 700, fontSize: '14px', letterSpacing: '.4px', color: '#004F71' }}>
+            Blend Planner <span style={{ color: '#5E7A8A', fontWeight: 500 }}>· Fort Worth</span>
+          </div>
 
-        {/* Terminal selector */}
-        <select
-          value={terminalId}
-          onChange={e => setTerminalId(e.target.value)}
-          style={selectStyle}
-        >
-          {TERMINALS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-        </select>
-
-        {/* Week of date picker */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={labelStyle}>Week of</span>
-          <input
-            type="date"
-            value={startDate}
-            onChange={e => setStartDate(e.target.value)}
-            style={{
-              backgroundColor: '#EEF3F6', color: '#063A52',
-              border: '1px solid rgba(0,79,113,.13)', borderRadius: '9px',
-              padding: '5px 10px', fontSize: '12px', fontFamily: "'Montserrat',sans-serif",
-              colorScheme: 'light', outline: 'none', cursor: 'pointer',
-            }}
-          />
-        </div>
-
-        {/* Tab bar */}
-        <div style={{ display: 'flex', gap: '0px', marginLeft: '8px' }}>
-          {TABS.map(tab => {
-            const active = activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: '6px 14px', fontSize: '12px', fontFamily: "'Montserrat',sans-serif",
-                  fontWeight: active ? 700 : 600, letterSpacing: '.5px',
-                  border: 'none', borderBottom: active ? '2px solid #00B398' : '2px solid transparent',
-                  cursor: 'pointer', borderRadius: 0,
-                  backgroundColor: active ? '#FFFFFF' : 'transparent',
-                  color: active ? '#004F71' : '#5E7A8A',
-                  transition: 'all 0.12s',
-                }}
-              >
-                {tab}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Start slot selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={labelStyle}>Start</span>
+          {/* Terminal selector */}
           <select
-            value={startSlot ?? 'null'}
-            onChange={e => setStartSlot(e.target.value === 'null' ? null : e.target.value)}
+            value={terminalId}
+            onChange={e => setTerminalId(e.target.value)}
             style={selectStyle}
           >
-            <option value="null">Full day</option>
-            <option value="00-05">00:00</option>
-            <option value="06-11">06:00</option>
-            <option value="12-17">12:00</option>
-            <option value="18-23">18:00</option>
+            {TERMINALS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
           </select>
-        </div>
 
-        {/* Plan day pill toggles */}
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-          {DAY_OPTIONS.map(n => (
-            <button
-              key={n}
-              onClick={() => setPlanDays(n)}
+          {/* Week of date picker */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={labelStyle}>Week of</span>
+            <input
+              type="date"
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
               style={{
-                padding: '4px 12px', fontSize: '11px', borderRadius: '100px',
-                border: `1px solid ${planDays === n ? '#004F71' : 'rgba(0,79,113,.13)'}`,
-                cursor: 'pointer', fontFamily: "'Montserrat',sans-serif",
-                backgroundColor: planDays === n ? '#004F71' : 'transparent',
-                color:           planDays === n ? '#FFFFFF' : '#5E7A8A',
-                fontWeight:      planDays === n ? 700 : 600,
-                transition: 'all 0.15s',
+                backgroundColor: '#FFFFFF', color: '#063A52',
+                border: '1px solid rgba(0,79,113,.13)', borderRadius: '9px',
+                padding: '5px 10px', fontSize: '12px', fontFamily: "'Montserrat',sans-serif",
+                colorScheme: 'light', outline: 'none', cursor: 'pointer',
               }}
-            >
-              {n}d
-            </button>
-          ))}
+            />
+          </div>
+
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* Dashboard link */}
+          <a href="/Terminal-Dashboard/" style={{ fontSize: '13px', fontWeight: 700, color: '#5E7A8A', textDecoration: 'none', letterSpacing: '.3px' }}>
+            ← Dashboard
+          </a>
         </div>
 
-        {/* Spacer */}
-        <div style={{ flex: 1 }} />
+        {/* Row 2: tabs + slot/day controls */}
+        <div style={{
+          display: 'flex', alignItems: 'center',
+          padding: '4px 20px 0', borderBottom: '1px solid rgba(0,79,113,.13)',
+          backgroundColor: '#FFFFFF',
+        }}>
+          {/* Tab bar */}
+          <div style={{ display: 'flex', gap: '0px' }}>
+            {TABS.map(tab => {
+              const active = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding: '6px 14px', paddingBottom: '8px',
+                    fontSize: '12px', fontFamily: "'Montserrat',sans-serif",
+                    fontWeight: active ? 700 : 600, letterSpacing: '.5px',
+                    border: 'none', borderBottom: active ? '2px solid #00B398' : '2px solid transparent',
+                    cursor: 'pointer', borderRadius: 0,
+                    backgroundColor: active ? '#EEF3F6' : 'transparent',
+                    color: active ? '#004F71' : '#5E7A8A',
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Dashboard link */}
-        <a href="/Terminal-Dashboard/" style={{ fontSize: '13px', fontWeight: 700, color: '#5E7A8A', textDecoration: 'none', letterSpacing: '.3px' }}>
-          ← Dashboard
-        </a>
+          {/* Spacer */}
+          <div style={{ flex: 1 }} />
+
+          {/* Start slot selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '10px' }}>
+            <span style={labelStyle}>Start</span>
+            <select
+              value={startSlot ?? 'null'}
+              onChange={e => setStartSlot(e.target.value === 'null' ? null : e.target.value)}
+              style={selectStyle}
+            >
+              <option value="null">Full day</option>
+              <option value="00-05">00:00</option>
+              <option value="06-11">06:00</option>
+              <option value="12-17">12:00</option>
+              <option value="18-23">18:00</option>
+            </select>
+          </div>
+
+          {/* Plan day pill toggles */}
+          <div style={{ display: 'flex', gap: '4px', alignItems: 'center', paddingBottom: '4px' }}>
+            {DAY_OPTIONS.map(n => (
+              <button
+                key={n}
+                onClick={() => setPlanDays(n)}
+                style={{
+                  padding: '4px 12px', fontSize: '11px', borderRadius: '100px',
+                  border: `1px solid ${planDays === n ? '#004F71' : 'rgba(0,79,113,.13)'}`,
+                  cursor: 'pointer', fontFamily: "'Montserrat',sans-serif",
+                  backgroundColor: planDays === n ? '#004F71' : 'transparent',
+                  color:           planDays === n ? '#FFFFFF' : '#5E7A8A',
+                  fontWeight:      planDays === n ? 700 : 600,
+                  transition: 'all 0.15s',
+                }}
+              >
+                {n}d
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
       {/* ── Body ────────────────────────────────────────────────── */}
@@ -220,7 +234,7 @@ export default function AppShell({
             {/* Left sidebar */}
             <div style={{
               width: SIDEBAR_W, flexShrink: 0,
-              backgroundColor: '#FFFFFF', borderRight: `1px solid ${C.border}`,
+              backgroundColor: C.sidebar, borderRight: `1px solid ${C.border}`,
               overflowY: 'auto',
             }}>
               <SidebarSection label="Opening Inventory" open={open.inventory} onToggle={() => toggle('inventory')}>

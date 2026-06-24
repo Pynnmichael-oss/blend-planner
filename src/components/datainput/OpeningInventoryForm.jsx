@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import VerticalTankGauge from '../blendplanner/InventoryBar';
 
 const C = {
-  bg:       '#EEF3F6',
-  panel:    '#FFFFFF',
+  bg:       '#FFFFFF',
+  panel:    '#EEF3F6',
   border:   'rgba(0,79,113,.13)',
   borderEm: 'rgba(0,79,113,.25)',
   text:     '#063A52',
@@ -15,7 +15,7 @@ const C = {
 };
 
 const inputBase = {
-  backgroundColor: '#EEF3F6', color: C.text,
+  backgroundColor: '#FFFFFF', color: C.text,
   border: `1px solid ${C.border}`, borderRadius: '6px',
   padding: '2px 5px', fontFamily: "'Montserrat',sans-serif", fontSize: '11px',
   textAlign: 'right',

@@ -4,8 +4,8 @@ import { detectBlends } from '../../data/blendPlanSummary';
 import SavePlanButton from '../shared/SavePlanButton';
 
 const C = {
-  bg:     '#EEF3F6',
-  panel:  '#FFFFFF',
+  bg:     '#FFFFFF',
+  panel:  '#EEF3F6',
   panel2: '#F5F8FA',
   border: 'rgba(0,79,113,.13)',
   text:   '#063A52',
@@ -117,7 +117,7 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
         className="font-mono"
         style={{
           width: '72px', textAlign: 'right', fontSize: '11px',
-          backgroundColor: '#EEF3F6', color, border: `1px solid ${C.border}`,
+          backgroundColor: '#FFFFFF', color, border: `1px solid ${C.border}`,
           borderRadius: '6px', padding: '2px 4px',
           fontFamily: "'Montserrat',sans-serif",
         }}
@@ -131,7 +131,7 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
 
   return (
     <div style={{
-      backgroundColor: '#FFFFFF', border: '1px solid rgba(0,79,113,.13)',
+      backgroundColor: '#EEF3F6', border: '1px solid rgba(0,79,113,.13)',
       borderRadius: '12px', padding: '16px', width: '280px', flexShrink: 0,
       boxShadow: '0 10px 26px -22px rgba(0,79,113,.5)',
     }}>
@@ -157,7 +157,7 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
             className="font-mono"
             style={{
               width: '72px', textAlign: 'right', fontSize: '11px',
-              backgroundColor: '#EEF3F6', color: '#004F71', border: `1px solid ${C.border}`,
+              backgroundColor: '#FFFFFF', color: '#004F71', border: `1px solid ${C.border}`,
               borderRadius: '6px', padding: '2px 4px',
               fontFamily: "'Montserrat',sans-serif",
             }}

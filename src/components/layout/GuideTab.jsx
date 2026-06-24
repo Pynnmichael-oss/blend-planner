@@ -1,6 +1,6 @@
 const C = {
-  bg:        '#EEF3F6',
-  panel:     '#FFFFFF',
+  bg:        '#FFFFFF',
+  panel:     '#EEF3F6',
   border:    'rgba(0,79,113,.13)',
   text:      '#063A52',
   muted:     '#5E7A8A',
@@ -43,7 +43,7 @@ function Step({ n, label, children }) {
     <div style={{ display: 'flex', gap: '14px', marginBottom: '16px' }}>
       <div style={{
         flexShrink: 0, width: '22px', height: '22px',
-        borderRadius: '50%', backgroundColor: '#FFFFFF',
+        borderRadius: '50%', backgroundColor: '#EEF3F6',
         border: '1px solid #00B398', color: '#00B398',
         fontSize: '11px', fontWeight: 600, fontFamily: "'Montserrat',sans-serif",
         display: 'flex', alignItems: 'center', justifyContent: 'center',

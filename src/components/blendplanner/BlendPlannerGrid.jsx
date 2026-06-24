@@ -4,7 +4,7 @@ import AllocationPanel from './AllocationPanel';
 import TankRow from './TankRow';
 
 const C = {
-  bg:     '#FFFFFF',
+  bg:     '#EEF3F6',
   border: 'rgba(0,79,113,.13)',
   text:   '#063A52',
   muted:  '#5E7A8A',
@@ -129,7 +129,7 @@ export default function BlendPlannerGrid({
             {sectionIdx > 0 && (
               <div style={{ height: '24px', display: 'flex', alignItems: 'center', gap: '10px', margin: '4px 0' }}>
                 <div style={{ flex: 1, height: '0.5px', backgroundColor: C.border }} />
-                <span style={{ fontSize: '9px', color: '#9DB0BC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#9DB0BC', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                   {product.label}
                 </span>
                 <div style={{ flex: 1, height: '0.5px', backgroundColor: C.border }} />
@@ -138,8 +138,8 @@ export default function BlendPlannerGrid({
 
             {/* Product section header */}
             <div style={{
-              fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase',
-              letterSpacing: '0.08em', marginBottom: '8px', color: '#004F71',
+              fontSize: '12px', fontWeight: 800, textTransform: 'uppercase',
+              letterSpacing: '1.6px', marginBottom: '8px', color: '#004F71',
             }}>
               {product.label}
             </div>
@@ -151,12 +151,12 @@ export default function BlendPlannerGrid({
                   <tr>
                     <th style={{
                       ...thBase, width: '88px', minWidth: '88px', textAlign: 'left',
-                      backgroundColor: '#FFFFFF',
+                      backgroundColor: '#EEF3F6',
                       borderRight: `0.5px solid ${C.border}`,
                     }} />
                     {dateSpans.map(({ date, count }, idx) => {
                       const { weekday, monthDay } = dateHeaderParts(date);
-                      const dayBg = idx % 2 === 0 ? '#EEF3F6' : '#F5F8FA';
+                      const dayBg = idx % 2 === 0 ? '#FFFFFF' : '#F5F8FA';
                       return (
                         <th key={date} colSpan={count} style={{
                           ...thBase, fontWeight: 'bold',
@@ -165,10 +165,10 @@ export default function BlendPlannerGrid({
                           borderLeft: `0.5px solid ${C.border}`,
                         }}>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', padding: '2px 0' }}>
-                            <span style={{ color: '#00B398', fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em' }}>
+                            <span style={{ color: '#00B398', fontSize: '11px', fontWeight: 800, letterSpacing: '0.06em' }}>
                               {weekday}
                             </span>
-                            <span style={{ color: '#063A52', fontSize: '11px' }}>{monthDay}</span>
+                            <span style={{ color: '#063A52', fontSize: '12px', fontWeight: 700 }}>{monthDay}</span>
                           </div>
                         </th>
                       );
@@ -176,15 +176,15 @@ export default function BlendPlannerGrid({
                   </tr>
                   {/* Row 2: slot labels */}
                   <tr>
-                    <th style={{ ...thBase, textAlign: 'left', color: '#5E7A8A', backgroundColor: '#FFFFFF', borderRight: `0.5px solid ${C.border}`, fontSize: '10px' }}>
+                    <th style={{ ...thBase, textAlign: 'left', color: '#5E7A8A', backgroundColor: '#EEF3F6', borderRight: `0.5px solid ${C.border}`, fontSize: '10px' }}>
                       Tank
                     </th>
                     {periods.map((p) => {
                       const dayIdx = dateIndexMap[p.date] ?? 0;
-                      const dayBg  = dayIdx % 2 === 0 ? '#EEF3F6' : '#F5F8FA';
+                      const dayBg  = dayIdx % 2 === 0 ? '#FFFFFF' : '#F5F8FA';
                       return (
                         <th key={p.key} style={{
-                          ...thBase, fontSize: '10px', color: '#5E7A8A',
+                          ...thBase, fontSize: '10px', fontWeight: 600, color: '#5E7A8A',
                           backgroundColor: dayBg,
                           borderRight: `0.5px solid ${C.border}`,
                         }}>

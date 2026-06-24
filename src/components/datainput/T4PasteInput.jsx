@@ -8,8 +8,8 @@ const GRADE_RVP_DEFAULTS = {
 const GRADES = ['4C', '4D', '3C', '3D'];
 
 const C = {
-  bg:       '#EEF3F6',
-  panel:    '#FFFFFF',
+  bg:       '#FFFFFF',
+  panel:    '#EEF3F6',
   border:   'rgba(0,79,113,.13)',
   borderEm: 'rgba(0,79,113,.25)',
   text:     '#063A52',
@@ -23,7 +23,7 @@ const C = {
 const thSt = {
   padding: '3px 6px', fontSize: '9px', color: C.muted, fontWeight: 'normal',
   borderBottom: `1px solid ${C.border}`, textAlign: 'left', whiteSpace: 'nowrap',
-  position: 'sticky', top: 0, zIndex: 2, backgroundColor: '#FFFFFF',
+  position: 'sticky', top: 0, zIndex: 2, backgroundColor: '#EEF3F6',
   fontFamily: "'Montserrat',sans-serif",
 };
 
@@ -117,7 +117,7 @@ export default function T4PasteInput({
           placeholder="Paste T4 data and press Parse"
           style={{
             flex: 1, height: '30px', boxSizing: 'border-box',
-            backgroundColor: '#FFFFFF', color: C.text,
+            backgroundColor: '#EEF3F6', color: C.text,
             border: `1px solid ${C.border}`, borderRadius: '9px',
             padding: '0 8px', fontSize: '11px',
             fontFamily: "'Montserrat',sans-serif", outline: 'none',
@@ -208,7 +208,7 @@ export default function T4PasteInput({
                       }}
                       style={{
                         width: '56px', flexShrink: 0, fontSize: '11px', textAlign: 'right',
-                        backgroundColor: '#EEF3F6', color: C.text,
+                        backgroundColor: '#FFFFFF', color: C.text,
                         border: `1px solid ${C.border}`, borderRadius: '6px',
                         padding: '2px 5px', fontFamily: "'Montserrat',sans-serif",
                       }}
@@ -254,7 +254,7 @@ export default function T4PasteInput({
         </div>
 
         {/* RIGHT PANEL — batch table */}
-        <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#FFFFFF' }}>
+        <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#EEF3F6' }}>
           {parsedReceipts ? (
             <table style={{ borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' }}>
               <colgroup>
@@ -283,7 +283,7 @@ export default function T4PasteInput({
                   return (
                     <tr
                       key={r.batchCode}
-                      style={{ backgroundColor: '#FFFFFF', borderLeft: `3px solid ${accentColor}` }}
+                      style={{ backgroundColor: '#EEF3F6', borderLeft: `3px solid ${accentColor}` }}
                     >
                       <td style={{ ...tdSt, color: C.muted }}>
                         {r.startDatetime.slice(0, 16).replace('T', ' ')}
@@ -316,7 +316,7 @@ export default function T4PasteInput({
                           onChange={e => handleRvpChange(r.batchCode, e.target.value)}
                           style={{
                             width: '56px', fontSize: '11px', textAlign: 'right',
-                            backgroundColor: '#EEF3F6', color: C.text,
+                            backgroundColor: '#FFFFFF', color: C.text,
                             border: `1px solid ${C.border}`,
                             borderLeft: `4px solid ${accentColor}`,
                             borderRadius: '6px', padding: '1px 3px',
