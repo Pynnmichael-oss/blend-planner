@@ -99,9 +99,9 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             <div style={{ marginBottom: '3px' }}>
               <span
                 style={{
-                  fontSize: '10px', padding: '3px 8px', borderRadius: '5px',
+                  fontSize: '10px', padding: '3px 8px', borderRadius: '5px', letterSpacing: '0.3px',
                   backgroundColor: badge.bg, color: badge.color,
-                  fontFamily: "'Montserrat',sans-serif", fontWeight: 700,
+                  fontFamily: "'Montserrat',sans-serif", fontWeight: 800,
                   userSelect: 'none', display: 'inline-block',
                 }}
               >
@@ -170,9 +170,9 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
               <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {entry.receipts.map((r, i) => (
                   <div key={i} style={{
-                    fontSize: '9px', fontFamily: "'Montserrat',sans-serif", color: '#004F71',
-                    backgroundColor: 'rgba(0,179,152,.08)', border: '1px solid rgba(0,179,152,.25)',
-                    borderRadius: '3px', padding: '1px 4px',
+                    fontSize: '10px', fontWeight: 700, fontFamily: "'Montserrat',sans-serif", color: '#004F71',
+                    backgroundColor: 'rgba(0,79,113,.10)', border: '1px solid rgba(0,79,113,.25)',
+                    borderRadius: '3px', padding: '2px 6px',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     maxWidth: '140px',
                   }}>
@@ -198,10 +198,10 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
 
             {/* Flows: ↑ receipts, ↓ liftings, ↗ spill */}
             {(recVol > 0 || liftVol < 0 || entry.spillVolume > 0) && (
-              <div className="font-mono" style={{ fontSize: '9px', color: '#9DB0BC', marginTop: '2px' }}>
+              <div className="font-mono" style={{ fontSize: '11px', fontWeight: 700, color: '#9DB0BC', marginTop: '2px' }}>
                 {recVol > 0 && <span style={{ color: '#00B398' }}>↑{Math.round(recVol).toLocaleString()}</span>}
                 {recVol > 0 && liftVol < 0 && ' '}
-                {liftVol < 0 && <span>↓{Math.round(Math.abs(liftVol)).toLocaleString()}</span>}
+                {liftVol < 0 && <span style={{ color: '#5E7A8A' }}>↓{Math.round(Math.abs(liftVol)).toLocaleString()}</span>}
                 {entry.spillVolume > 0 && (
                   <span style={{ color: '#C0882E' }}>{(recVol > 0 || liftVol < 0) ? ' ' : ''}↗{Math.round(entry.spillVolume).toLocaleString()} spill</span>
                 )}
