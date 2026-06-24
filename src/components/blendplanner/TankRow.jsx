@@ -4,40 +4,40 @@
 import VerticalTankGauge from './InventoryBar';
 
 const C = {
-  bg:          '#111827',
-  blendBg:     '#1a0a0a',
-  conflictBg:  '#1a1200',
-  overfillBg:  '#0f0a1a',
-  border:      '#1e293b',
-  text:        '#f1f5f9',
-  muted:       '#64748b',
-  amber:       '#f59e0b',
-  blue:        '#60a5fa',
-  red:         '#ef4444',
+  bg:          '#FFFFFF',
+  blendBg:     'rgba(217,101,91,.08)',
+  conflictBg:  'rgba(224,162,60,.08)',
+  overfillBg:  'rgba(124,58,237,.08)',
+  border:      'rgba(0,79,113,.13)',
+  text:        '#063A52',
+  muted:       '#5E7A8A',
+  amber:       '#00B398',
+  blue:        '#004F71',
+  red:         '#D9655B',
   purple:      '#7c3aed',
 };
 
 const STATUS_BADGE = {
-  BLEND:    { bg: '#ef4444', color: '#ffffff' },
-  RACK:     { bg: '#166534', color: '#dcfce7' },
-  RECEIPT:  { bg: '#92400e', color: '#fef3c7' },
-  IDLE:     { bg: '#1e293b', color: '#64748b' },
-  CONFLICT: { bg: '#f59e0b', color: '#000000' },
-  OVERFILL: { bg: '#7c3aed', color: '#ffffff' },
-  LOW:      { bg: '#1e3a5f', color: '#93c5fd' },
-  'RACK+RCV': { bg: '#1a3a2a', color: '#86efac' },
+  BLEND:      { bg: 'rgba(217,101,91,.15)',  color: '#D9655B' },
+  RACK:       { bg: 'rgba(0,179,152,.14)',   color: '#0a7e62' },
+  RECEIPT:    { bg: 'rgba(0,79,113,.10)',    color: '#004F71' },
+  IDLE:       { bg: 'rgba(0,79,113,.07)',    color: '#5E7A8A' },
+  CONFLICT:   { bg: 'rgba(224,162,60,.15)',  color: '#92660a' },
+  OVERFILL:   { bg: 'rgba(192,136,46,.18)',  color: '#8a5e12' },
+  LOW:        { bg: 'rgba(0,79,113,.10)',    color: '#004F71' },
+  'RACK+RCV': { bg: 'rgba(0,179,152,.14)',   color: '#0a7e62' },
 };
 
 const CELL_LEFT_BORDER = {
-  BLEND:      '3px solid #ef4444',
-  CONFLICT:   '3px solid #f59e0b',
-  OVERFILL:   '3px solid #7c3aed',
-  'RACK+RCV': '3px solid #22c55e',
+  BLEND:      '3px solid #D9655B',
+  CONFLICT:   '3px solid #E0A23C',
+  OVERFILL:   '3px solid #C0882E',
+  'RACK+RCV': '3px solid #00B398',
 };
 
 const INV_COLOR = {
-  BLEND:    '#fca5a5',
-  CONFLICT: '#fde68a',
+  BLEND:    '#D9655B',
+  CONFLICT: '#92660a',
 };
 
 export default function TankRow({ tank, periods, cells, openingFillPct, toggleBlend, onToggleIdle, onCellClick, dateIndexMap }) {
@@ -45,7 +45,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
     <tr>
       {/* ── Row header ─── */}
       <td style={{
-        padding: '6px 8px', backgroundColor: C.bg,
+        padding: '6px 8px', backgroundColor: '#FFFFFF',
         borderBottom: `0.5px solid ${C.border}`, borderRight: `0.5px solid ${C.border}`,
         verticalAlign: 'middle', whiteSpace: 'nowrap', position: 'sticky', left: 0, zIndex: 1,
       }}>
@@ -59,7 +59,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
       {periods.map((p) => {
         const entry    = cells?.[p.key];
         const dayIndex = dateIndexMap?.[p.date] ?? 0;
-        const dayBg    = dayIndex % 2 === 0 ? '#0f1520' : '#111827';
+        const dayBg    = dayIndex % 2 === 0 ? '#EEF3F6' : '#F5F8FA';
 
         if (!entry) {
           return (
@@ -98,9 +98,10 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             <div style={{ marginBottom: '3px' }}>
               <span
                 style={{
-                  fontSize: '9px', padding: '1px 5px', borderRadius: '3px',
+                  fontSize: '9px', padding: '2px 6px', borderRadius: '5px',
                   backgroundColor: badge.bg, color: badge.color,
-                  fontFamily: 'monospace', userSelect: 'none', display: 'inline-block',
+                  fontFamily: "'Montserrat',sans-serif", fontWeight: 700,
+                  userSelect: 'none', display: 'inline-block',
                 }}
               >
                 {status}
@@ -114,9 +115,9 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
                 title={entry.blendActive ? 'Remove blend' : 'Set blend'}
                 style={{
                   fontSize: '8px', padding: '1px 5px', borderRadius: '3px',
-                  backgroundColor: entry.blendActive ? '#ef4444' : '#1e293b',
-                  color: entry.blendActive ? '#fff' : '#64748b',
-                  fontFamily: 'monospace', cursor: 'pointer', userSelect: 'none',
+                  backgroundColor: entry.blendActive ? 'rgba(217,101,91,.15)' : 'rgba(0,79,113,.07)',
+                  color: entry.blendActive ? '#D9655B' : '#9DB0BC',
+                  fontFamily: "'Montserrat',sans-serif", cursor: 'pointer', userSelect: 'none',
                 }}
               >
                 BLEND
@@ -126,9 +127,9 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
                 title={entry.manualIdle ? 'Remove idle' : 'Force idle'}
                 style={{
                   fontSize: '8px', padding: '1px 5px', borderRadius: '3px',
-                  backgroundColor: entry.manualIdle ? '#334155' : '#1e293b',
-                  color: entry.manualIdle ? '#f1f5f9' : '#64748b',
-                  fontFamily: 'monospace', cursor: 'pointer', userSelect: 'none',
+                  backgroundColor: entry.manualIdle ? 'rgba(0,79,113,.12)' : 'rgba(0,79,113,.07)',
+                  color: entry.manualIdle ? '#004F71' : '#9DB0BC',
+                  fontFamily: "'Montserrat',sans-serif", cursor: 'pointer', userSelect: 'none',
                   display: entry.blendActive ? 'none' : 'inline-block',
                 }}
               >
@@ -147,17 +148,17 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             </div>
 
             {/* RVP */}
-            <div className="font-mono" style={{ fontSize: '10px', color: C.blue, lineHeight: 1.3 }}>
+            <div className="font-mono" style={{ fontSize: '10px', color: '#004F71', lineHeight: 1.3 }}>
               RVP {entry.closingRVP.toFixed(3)}
             </div>
 
             {/* Post-blend butane addition */}
             {entry.postBlendButane > 0 && (
               <>
-                <div style={{ fontSize: '9px', color: '#22c55e', fontFamily: 'monospace', marginTop: '3px' }}>
+                <div style={{ fontSize: '9px', color: '#00B398', fontFamily: 'monospace', marginTop: '3px' }}>
                   +{Math.round(entry.postBlendButane).toLocaleString()} bbl · {entry.postBlendTrucks} trucks
                 </div>
-                <div style={{ fontSize: '9px', color: '#60a5fa', fontFamily: 'monospace' }}>
+                <div style={{ fontSize: '9px', color: '#004F71', fontFamily: 'monospace' }}>
                   RVP → {entry.postBlendRVP?.toFixed(3)}
                 </div>
               </>
@@ -168,8 +169,8 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
               <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {entry.receipts.map((r, i) => (
                   <div key={i} style={{
-                    fontSize: '9px', fontFamily: 'monospace', color: '#f59e0b',
-                    backgroundColor: '#1c1500', border: '1px solid #3d2e00',
+                    fontSize: '9px', fontFamily: "'Montserrat',sans-serif", color: '#004F71',
+                    backgroundColor: 'rgba(0,179,152,.08)', border: '1px solid rgba(0,179,152,.25)',
                     borderRadius: '3px', padding: '1px 4px',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     maxWidth: '140px',
@@ -182,26 +183,26 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
 
             {/* Sub-labels */}
             {status === 'BLEND' && (
-              <div style={{ fontSize: '8px', color: C.red, letterSpacing: '0.06em', marginTop: '1px' }}>OFFLINE</div>
+              <div style={{ fontSize: '8px', color: '#D9655B', letterSpacing: '0.06em', marginTop: '1px' }}>OFFLINE</div>
             )}
             {status === 'CONFLICT' && (
-              <div style={{ fontSize: '8px', color: C.amber, letterSpacing: '0.06em', marginTop: '1px' }}>CONFLICT</div>
+              <div style={{ fontSize: '8px', color: '#92660a', letterSpacing: '0.06em', marginTop: '1px' }}>CONFLICT</div>
             )}
             {status === 'OVERFILL' && (
-              <div style={{ fontSize: '8px', color: C.purple, letterSpacing: '0.06em', marginTop: '1px' }}>OVER SAFE FILL</div>
+              <div style={{ fontSize: '8px', color: '#C0882E', letterSpacing: '0.06em', marginTop: '1px' }}>OVER SAFE FILL</div>
             )}
             {entry.belowHeel && (
-              <div style={{ fontSize: '8px', color: '#93c5fd', letterSpacing: '0.06em', marginTop: '1px' }}>BELOW HEEL</div>
+              <div style={{ fontSize: '8px', color: '#5E7A8A', letterSpacing: '0.06em', marginTop: '1px' }}>BELOW HEEL</div>
             )}
 
             {/* Flows: ↑ receipts, ↓ liftings, ↗ spill */}
             {(recVol > 0 || liftVol < 0 || entry.spillVolume > 0) && (
-              <div className="font-mono" style={{ fontSize: '9px', color: C.muted, marginTop: '2px' }}>
-                {recVol > 0 && <span style={{ color: C.amber }}>↑{Math.round(recVol).toLocaleString()}</span>}
+              <div className="font-mono" style={{ fontSize: '9px', color: '#9DB0BC', marginTop: '2px' }}>
+                {recVol > 0 && <span style={{ color: '#00B398' }}>↑{Math.round(recVol).toLocaleString()}</span>}
                 {recVol > 0 && liftVol < 0 && ' '}
                 {liftVol < 0 && <span>↓{Math.round(Math.abs(liftVol)).toLocaleString()}</span>}
                 {entry.spillVolume > 0 && (
-                  <span style={{ color: C.purple }}>{(recVol > 0 || liftVol < 0) ? ' ' : ''}↗{Math.round(entry.spillVolume).toLocaleString()} spill</span>
+                  <span style={{ color: '#C0882E' }}>{(recVol > 0 || liftVol < 0) ? ' ' : ''}↗{Math.round(entry.spillVolume).toLocaleString()} spill</span>
                 )}
               </div>
             )}
