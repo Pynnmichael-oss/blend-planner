@@ -4,9 +4,16 @@ import { detectBlends } from '../../data/blendPlanSummary';
 import SavePlanButton from '../shared/SavePlanButton';
 
 const C = {
-  bg: '#0a0c12', panel: '#111827', panel2: '#0f1117',
-  border: '#1e293b', text: '#f1f5f9', muted: '#64748b', amber: '#f59e0b', blue: '#60a5fa',
-  red: '#ef4444', green: '#22c55e',
+  bg:     '#EEF3F6',
+  panel:  '#FFFFFF',
+  panel2: '#F5F8FA',
+  border: 'rgba(0,79,113,.13)',
+  text:   '#063A52',
+  muted:  '#5E7A8A',
+  amber:  '#00B398',
+  blue:   '#004F71',
+  red:    '#D9655B',
+  green:  '#0a7e62',
 };
 
 const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -21,9 +28,10 @@ function fmtDate(dateStr) {
 function th(label) {
   return (
     <th style={{
-      padding: '4px 8px', fontSize: '10px', color: C.amber, fontWeight: 'bold',
+      padding: '4px 8px', fontSize: '10px', color: '#004F71', fontWeight: 'bold',
       textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'left',
       borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap',
+      fontFamily: "'Montserrat',sans-serif",
     }}>
       {label}
     </th>
@@ -95,22 +103,23 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
 
   const row = (label, value, mono = true, color = C.text) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-      <span style={{ fontSize: '11px', color: C.muted }}>{label}</span>
+      <span style={{ fontSize: '11px', color: C.muted, fontFamily: "'Montserrat',sans-serif" }}>{label}</span>
       <span className={mono ? 'font-mono' : ''} style={{ fontSize: '11px', color }}>{value}</span>
     </div>
   );
 
   const inputRow = (label, value, onChange, color = C.text) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-      <span style={{ fontSize: '11px', color: C.muted }}>{label}</span>
+      <span style={{ fontSize: '11px', color: C.muted, fontFamily: "'Montserrat',sans-serif" }}>{label}</span>
       <input
         type="number" step="0.1" value={value}
         onChange={e => onChange(e.target.value)}
         className="font-mono"
         style={{
           width: '72px', textAlign: 'right', fontSize: '11px',
-          backgroundColor: C.bg, color, border: `1px solid ${C.border}`,
-          borderRadius: '3px', padding: '2px 4px',
+          backgroundColor: '#EEF3F6', color, border: `1px solid ${C.border}`,
+          borderRadius: '6px', padding: '2px 4px',
+          fontFamily: "'Montserrat',sans-serif",
         }}
       />
     </div>
@@ -122,10 +131,11 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
 
   return (
     <div style={{
-      backgroundColor: C.bg, border: `1px solid ${C.border}`,
-      borderRadius: '6px', padding: '12px', width: '280px', flexShrink: 0,
+      backgroundColor: '#FFFFFF', border: '1px solid rgba(0,79,113,.13)',
+      borderRadius: '12px', padding: '16px', width: '280px', flexShrink: 0,
+      boxShadow: '0 10px 26px -22px rgba(0,79,113,.5)',
     }}>
-      <div style={{ fontSize: '12px', fontWeight: 'bold', color: C.text, marginBottom: '2px' }}>
+      <div style={{ fontSize: '12px', fontWeight: 700, color: C.text, marginBottom: '2px', fontFamily: "'Montserrat',sans-serif" }}>
         Blend {blend.blendNumber} — {blend.tankLabel}
       </div>
       <div style={{ fontSize: '10px', color: C.muted, marginBottom: '10px' }}>
@@ -140,31 +150,32 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
       {/* RVP Target row with ceiling breach warning */}
       <div style={{ marginBottom: '4px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '11px', color: C.muted }}>RVP Target</span>
+          <span style={{ fontSize: '11px', color: C.muted, fontFamily: "'Montserrat',sans-serif" }}>RVP Target</span>
           <input
             type="number" step="0.1" value={rvpTarget}
             onChange={e => setRvpTarget(e.target.value)}
             className="font-mono"
             style={{
               width: '72px', textAlign: 'right', fontSize: '11px',
-              backgroundColor: C.bg, color: C.blue, border: `1px solid ${C.border}`,
-              borderRadius: '3px', padding: '2px 4px',
+              backgroundColor: '#EEF3F6', color: '#004F71', border: `1px solid ${C.border}`,
+              borderRadius: '6px', padding: '2px 4px',
+              fontFamily: "'Montserrat',sans-serif",
             }}
           />
         </div>
         {warnCeilingTarget && (
-          <div style={{ fontSize: '10px', color: C.red, marginTop: '2px', textAlign: 'right' }}>
+          <div style={{ fontSize: '10px', color: '#D9655B', marginTop: '2px', textAlign: 'right' }}>
             ⚠ Target exceeds spec ceiling
           </div>
         )}
       </div>
 
-      {inputRow('RVP Actual', rvpActual, setRvpActual, C.blue)}
+      {inputRow('RVP Actual', rvpActual, setRvpActual, '#004F71')}
       {row('RVP Margin', marginValue, true, marginColor)}
       <div style={{ borderTop: `1px solid ${C.border}`, margin: '8px 0' }} />
 
       {warnCeilingActual && (
-        <div style={{ fontSize: '10px', color: C.red, marginBottom: '6px' }}>
+        <div style={{ fontSize: '10px', color: '#D9655B', marginBottom: '6px' }}>
           ⚠ RVP at or above spec ceiling — do not blend
         </div>
       )}
@@ -173,7 +184,7 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
         (butaneLow !== null && butaneHigh !== null)
           ? `${Math.round(butaneLow).toLocaleString()} – ${Math.round(butaneHigh).toLocaleString()} bbl`
           : '—',
-        true, C.amber
+        true, '#00B398'
       )}
       {row('Trucks',
         (trucksLow !== null && trucksHigh !== null)
@@ -183,18 +194,18 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
       )}
 
       {warnHeadroom && (
-        <div style={{ fontSize: '10px', color: C.amber, marginTop: '4px' }}>
+        <div style={{ fontSize: '10px', color: '#00B398', marginTop: '4px' }}>
           ⚠ Butane volume exceeds available headroom — confirm safe fill before scheduling
         </div>
       )}
       {warnNoPumpable && (
-        <div style={{ fontSize: '10px', color: C.amber, marginTop: '4px' }}>
+        <div style={{ fontSize: '10px', color: '#00B398', marginTop: '4px' }}>
           ⚠ Enter pumpable volume to calculate trucks
         </div>
       )}
 
       <div style={{ borderTop: `1px solid ${C.border}`, marginTop: '10px', paddingTop: '8px' }}>
-        <div style={{ fontSize: '10px', color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
+        <div style={{ fontSize: '10px', color: '#9DB0BC', textTransform: 'uppercase', letterSpacing: '1.4px', marginBottom: '4px', fontFamily: "'Montserrat',sans-serif" }}>
           Truck Window
         </div>
         <div style={{ fontSize: '11px', color: C.text }}>
@@ -225,14 +236,22 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
 
   if (!blends.length) {
     return (
-      <div style={{ padding: '16px', color: C.muted, fontSize: '12px' }}>
+      <div style={{ padding: '16px', color: C.muted, fontSize: '12px', fontFamily: "'Montserrat',sans-serif" }}>
         No blend periods detected. Toggle tanks to BLEND in the grid above.
       </div>
     );
   }
 
-  const thStyle = { padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'left', borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap' };
-  const tdBase  = { padding: '5px 8px', fontSize: '12px', color: C.text, borderBottom: `0.5px solid ${C.border}`, whiteSpace: 'nowrap' };
+  const thStyle = {
+    padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', color: '#004F71',
+    textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'left',
+    borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap',
+    fontFamily: "'Montserrat',sans-serif",
+  };
+  const tdBase = {
+    padding: '5px 8px', fontSize: '12px', color: C.text,
+    borderBottom: `0.5px solid ${C.border}`, whiteSpace: 'nowrap',
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -240,7 +259,7 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
       {/* Section A — summary table */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
-          <span style={{ fontSize: '11px', fontWeight: 'bold', color: C.text, letterSpacing: '0.05em' }}>
+          <span style={{ fontSize: '11px', fontWeight: 'bold', color: C.text, letterSpacing: '0.05em', fontFamily: "'Montserrat',sans-serif" }}>
             {title}
           </span>
           <span style={{ fontSize: '11px', color: C.muted }}>{titleDateRange}</span>
@@ -274,7 +293,7 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>
                     {b.trucks !== null ? b.trucks : <span style={{ color: C.muted }}>—</span>}
                   </td>
-                  <td style={{ ...tdBase, fontFamily: 'monospace', color: C.blue }}>
+                  <td style={{ ...tdBase, fontFamily: 'monospace', color: '#004F71' }}>
                     {b.blendedRVP ? b.blendedRVP.toFixed(3) : <span style={{ color: C.muted }}>—</span>}
                   </td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>{b.truckStart}</td>
@@ -292,7 +311,7 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
 
       {/* Section B — butane calculators */}
       <div>
-        <div style={{ fontSize: '10px', color: C.amber, fontWeight: 'bold', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>
+        <div style={{ fontSize: '10px', color: '#004F71', fontWeight: 'bold', letterSpacing: '1.4px', textTransform: 'uppercase', marginBottom: '12px', fontFamily: "'Montserrat',sans-serif" }}>
           Butane Calculator
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
