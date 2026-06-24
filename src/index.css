@@ -1,1 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
+
+* { font-family: 'Montserrat', system-ui, sans-serif; }
+body {
+  background: radial-gradient(1000px 520px at 92% -14%, rgba(0,179,152,.07), transparent 60%),
+              radial-gradient(760px 440px at -3% 114%, rgba(169,238,138,.11), transparent 60%),
+              #ffffff;
+  color: #063A52;
+}

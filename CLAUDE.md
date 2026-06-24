@@ -51,7 +51,9 @@ src/
     distributeReceipts.js          — distributeReceipts() — time-window overlap
     liftingsCurve.js               — buildLiftingsGrid(), getDefaultLifting()
     parseT4.js                     — parseT4() — tab-separated T4 paste parser
+    blendPlanSummary.js            — detectBlends(grid, terminalConfig) → BlendRow[]
     blendLogic.js                  — evaluateBlendSignal() — STUB, pending Kelly spec
+    googleSheets.js                — savePlanToSheet(), JWT signing via SubtleCrypto
 
   hooks/
     useBlendPlanner.js             — single source of truth for all app state
@@ -65,6 +67,7 @@ src/
       TankRow.jsx                  — renders one <tr>: row header + all period cells
       InventoryBar.jsx             — VerticalTankGauge component (default export)
       AllocationPanel.jsx          — modal overlay for per-tank receipt/lifting allocation
+      BlendPlanSummary.jsx         — summary table + BlendCalculator cards + SavePlanButton
       BlendToggle.jsx              — stub
       DayColumn.jsx                — stub
       ProductSection.jsx           — stub
@@ -161,8 +164,19 @@ Each `src/config/*.json` follows this structure:
   manualIdle:       false,          // alias for isManualIdle
   spillVolume:      0,              // bbls that overflowed safeFill cap
   spillWarning:     false,          // spillVolume > 0
-  belowHeel:        false,          // closingInventory < tank.heel
+  belowHeel:        false,          // always false — LOW status not yet implemented
+  heel:             6458,           // tank.heel passed through for downstream use
+  safeFill:         56851,          // tank.safeFill passed through
+  closingTOV:       44298,          // closingInventory + tank.heel
   conflictMessage:  undefined,      // set when blendActive conflicts with receipt/rack
+
+  // Fields added ONLY on the first post-blend period (blendActive just turned false)
+  // when butane demand is > 0 and trucksNeeded > 0:
+  postBlendButane:  1710,           // actualButane bbls (trucks * TRUCK_BBLS)
+  postBlendTrucks:  9,              // floor(butane_bbls / TRUCK_BBLS)
+  postBlendRVP:     8.77,           // blended RVP after butane addition
+  // Note: openingInventory and openingRVP on the post-blend period are also
+  // overridden to reflect butane already added (inventory + actualButane, RVP = blendedRVP)
 }
 ```
 
@@ -209,15 +223,22 @@ openingInventory + receipts + liftings
          │
          └─ status (derived, never set manually):
                isManualIdle → IDLE
-               closingInventory > safeFill → OVERFILL
-               blendActive + receipt/rack conflict → CONFLICT
+               closingInventory >= (safeFill − heel) → OVERFILL
+               blendActive + (receipt volume > 0 or isRackTank) → CONFLICT
                blendActive → BLEND
-               onRack + onReceipt → RACK+RCV
+               onRack + onReceipt (same tank) → CONFLICT  ← was RACK+RCV, changed
                onRack → RACK
                onReceipt → RECEIPT
                otherwise → IDLE
-               belowHeel + IDLE/RACK → LOW
+               (LOW status: belowHeel is always false — not yet implemented)
 ```
+
+### Blend-end butane injection
+When `blendActive` flips false (tank just stopped blending), `buildPlanGrid` immediately calculates butane demand for that tank. If `trucks > 0` and `rvpActual < specCeiling`, it:
+1. Attaches `blendSummary: { estPumpable, tov, rvpActual, rvpTarget, butane_bbls, trucks, actualButane, blendedRVP }` to the **last blending period's** result entry (mutates in-place via index).
+2. Overrides the **first post-blend period's** `openingInventory`, `openingRVP`, `closingInventory`, `closingTOV`, `closingRVP`, and adds `postBlendButane`, `postBlendTrucks`, `postBlendRVP` fields.
+
+`detectBlends(grid, terminalConfig)` reads `blendSummary` off the last period of each run to populate the `BlendPlanSummary` table.
 
 ### distributeReceipts logic
 Converts a receipt's `startDatetime + volume + rate` into time-window slices.
@@ -251,6 +272,9 @@ All state lives in `useBlendPlanner` (src/hooks/useBlendPlanner.js).
 | `parsedReceipts` | `PipelineReceipt[] \| null` | `null` | staging area for T4 parse before confirm |
 | `rvpValues` | `{ [batchCode]: number }` | `{}` | RVP entered in T4PasteInput before confirm |
 | `rvpConfirmed` | `{ [batchCode]: boolean }` | `{}` | which batches have RVP confirmed |
+| `startSlot` | `string \| null` | `null` | when set, skips slots before this value on day 1 (e.g. `"06-11"`) |
+| `specCeiling` | `number` | `9.0` | RVP spec ceiling — blend is suppressed if `rvpActual >= specCeiling` |
+| `blendTarget` | `number` | `8.75` | target RVP for butane demand calculation |
 
 ### Derived (useMemo)
 - `terminalConfig` — lookup from `TERMINAL_CONFIGS[terminalId]`
@@ -258,6 +282,8 @@ All state lives in `useBlendPlanner` (src/hooks/useBlendPlanner.js).
 
 ### Actions exposed
 - `setTerminalId`, `setStartDate`, `setOpeningInventory`, `setReceipts`, `setPlanDays`
+- `setStartSlot` — filters first-day columns to start at the chosen time slot
+- `setSpecCeiling`, `setBlendTarget` — update RVP thresholds; reflected live in the grid
 - `setLiftings`, `resetLiftings` — reset rebuilds from curve + clears `rackTankAssignments`
 - `toggleBlend(tankId, date, timeSlot)` — flips `blendActive` in manualInputs
 - `toggleIdle(tankId, date, timeSlot)` — flips `idle` in manualInputs (also clears blendActive)
@@ -283,17 +309,29 @@ All state lives in `useBlendPlanner` (src/hooks/useBlendPlanner.js).
 ## UI Architecture
 
 ### Layout
+
+Header contains: BLEND PLANNER wordmark · terminal picker · "Week of" date input · tab bar (PLAN / RECEIPTS / LIFTINGS / SUMMARY / GUIDE) · start-slot selector · day-count pills (3d/5d/8d).
+
 ```
-┌── 48px header ──────────────────────────────────────────────────┐
-│ BLEND PLANNER   [Fort Worth ▾]   Apr 16 – Apr 23   [3d][5d][8d] │
-└─────────────────────────────────────────────────────────────────┘
-┌── 272px sidebar ──────────┐  ┌── flex-1 main (scrollable) ──────┐
-│ ▲ OPENING INVENTORY       │  │  REGULAR                         │
-│   OpeningInventoryForm    │  │  [table: tanks × periods]        │
-│ ▼ T4 RECEIPTS             │  │                                  │
-│ ▼ RACK LIFTINGS           │  │  ─────── PREMIUM ────────        │
-└───────────────────────────┘  │  [table: tanks × periods]        │
-                               └──────────────────────────────────┘
+┌── 48px header ──────────────────────────────────────────────────────────────────┐
+│ BLEND PLANNER  [Fort Worth ▾]  Week of [date]  [PLAN][RECEIPTS][LIFTINGS]...   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+PLAN tab:
+┌── 300px sidebar ──────────┐  ┌── flex-1 main (scrollable) ──────────────────────┐
+│ ▲ OPENING INVENTORY       │  │  REGULAR                                         │
+│   OpeningInventoryForm    │  │  [table: tanks × periods]                        │
+│   (+ specCeiling,         │  │                                                  │
+│    blendTarget inputs)    │  │  ─────── PREMIUM ────────                        │
+└───────────────────────────┘  │  [table: tanks × periods]                        │
+                               │                                                  │
+                               │  ▼ Blend Plan Summary (collapsible)              │
+                               └──────────────────────────────────────────────────┘
+
+RECEIPTS tab  → T4PasteInput (full screen)
+LIFTINGS tab  → LiftingsInput (full screen)
+SUMMARY tab   → BlendPlanSummary (full screen)
+GUIDE tab     → GuideTab (full screen)
 ```
 
 ### Grid cell layout (TankRow.jsx)
@@ -393,6 +431,20 @@ The "Confirm & Apply" button is disabled until all RVPs are entered.
 Displays pumpable in **thousands** (`38500` → shows `38.5`). Stores full bbls internally.
 Conversion: `toK(v) = (v/1000).toFixed(1)` / `fromK(s) = round(parseFloat(s) * 1000)`.
 Grouped under REGULAR / PREMIUM sub-headers (9px amber). No product badge column.
+
+---
+
+## Google Sheets Integration
+
+`src/data/googleSheets.js` — browser-side Google Sheets append via service account JWT (no backend).
+
+- `SHEET_ID` = `'1siJmeWuFgVCOxK2acali-_wzY8QSJm20OLxJbP3-dfc'`
+- Credentials are pasted by the operator at runtime and stored in `sessionStorage` only (key: `blend_planner_gcreds`). Never bundled or committed.
+- JWT signing uses `SubtleCrypto.sign` (RSASSA-PKCS1-v1_5 / SHA-256) — no npm packages.
+- `savePlanToSheet()` appends to two tabs: **Blend History** (one row per blend) and **Weekly Snapshots** (one row for the week).
+- `SavePlanButton` in `BlendPlanSummary` exposes a 2-step modal: paste creds → add notes → confirm save.
+
+TODO (IT): replace runtime credential paste with a backend auth endpoint.
 
 ---
 

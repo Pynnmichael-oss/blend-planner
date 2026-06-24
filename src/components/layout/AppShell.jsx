@@ -11,23 +11,36 @@ const DAY_OPTIONS = [3, 5, 8];
 const TABS        = ['PLAN', 'RECEIPTS', 'LIFTINGS', 'SUMMARY', 'GUIDE'];
 
 const C = {
-  pageBg:    '#0a0c12',
-  headerBg:  '#0f1117',
-  sidebar:   '#0f1117',
-  panel:     '#111827',
-  border:    '#1e293b',
-  borderEm:  '#2a2d3a',
-  text:      '#f1f5f9',
-  secondary: '#64748b',
-  muted:     '#334155',
-  amber:     '#f59e0b',
-  blue:      '#60a5fa',
-  red:       '#ef4444',
-  green:     '#22c55e',
+  pageBg:    '#EEF3F6',
+  headerBg:  '#FFFFFF',
+  sidebar:   '#FFFFFF',
+  panel:     '#FFFFFF',
+  border:    'rgba(0,79,113,.13)',
+  borderEm:  'rgba(0,79,113,.25)',
+  text:      '#063A52',
+  secondary: '#5E7A8A',
+  muted:     '#9DB0BC',
+  amber:     '#00B398',
+  blue:      '#004F71',
+  red:       '#D9655B',
+  green:     '#00B398',
+  teal:      '#00B398',
+  slate:     '#004F71',
 };
 
 const SIDEBAR_W = 300;
 const HEADER_H  = 48;
+
+const labelStyle = {
+  fontSize: '10px', color: '#5E7A8A', textTransform: 'uppercase',
+  letterSpacing: '1.4px', fontWeight: 700, flexShrink: 0,
+};
+
+const selectStyle = {
+  backgroundColor: '#EEF3F6', color: '#063A52', border: '1px solid rgba(0,79,113,.13)',
+  borderRadius: '9px', padding: '5px 12px', fontSize: '12px',
+  fontFamily: "'Montserrat',sans-serif", fontWeight: 600, outline: 'none', cursor: 'pointer',
+};
 
 function SidebarSection({ label, open, onToggle, children }) {
   return (
@@ -37,12 +50,13 @@ function SidebarSection({ label, open, onToggle, children }) {
         style={{
           width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer',
-          color: C.amber, fontSize: '10px', fontWeight: '600',
-          letterSpacing: '0.08em', textTransform: 'uppercase',
+          color: '#004F71', fontSize: '10px', fontWeight: 700,
+          letterSpacing: '1.4px', textTransform: 'uppercase',
+          borderBottom: '1px solid rgba(0,79,113,.13)',
         }}
       >
         <span>{label}</span>
-        <span style={{ fontSize: '11px', color: C.secondary, fontWeight: 'normal' }}>
+        <span style={{ fontSize: '11px', color: '#9DB0BC', fontWeight: 'normal' }}>
           {open ? '▲' : '▼'}
         </span>
       </button>
@@ -77,51 +91,58 @@ export default function AppShell({
   return (
     <div style={{
       height: '100vh', display: 'flex', flexDirection: 'column',
-      backgroundColor: C.pageBg, color: C.text, fontFamily: 'system-ui, sans-serif',
+      backgroundColor: C.pageBg, color: C.text, fontFamily: "'Montserrat', system-ui, sans-serif",
     }}>
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <header style={{
         height: HEADER_H, flexShrink: 0,
-        backgroundColor: C.headerBg, borderBottom: `1px solid ${C.border}`,
-        display: 'flex', alignItems: 'center', gap: '14px', padding: '0 18px',
+        backgroundColor: '#FFFFFF',
+        borderBottom: '1px solid rgba(0,79,113,.13)',
+        display: 'flex', alignItems: 'center', gap: '14px', padding: '0 20px',
+        position: 'sticky', top: 0, zIndex: 50,
       }}>
-        <span style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: '13px', color: C.amber, letterSpacing: '0.1em' }}>
-          BLEND PLANNER
-        </span>
 
-        {/* Terminal pill selector */}
+        {/* Wordmark */}
+        <div style={{ fontFamily: "'Montserrat', sans-serif", fontWeight: 800, fontSize: '19px', letterSpacing: '.5px', color: '#004F71', lineHeight: '.96' }}>
+          GLOBAL<span style={{ display: 'block', fontWeight: 700, fontSize: '10px', letterSpacing: '3.5px', color: '#00B398', marginTop: '2px' }}>PARTNERS</span>
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: '1px', height: '30px', background: 'rgba(0,79,113,.13)' }} />
+
+        {/* Page name */}
+        <div style={{ fontWeight: 700, fontSize: '14px', letterSpacing: '.4px', color: '#004F71' }}>
+          Blend Planner <span style={{ color: '#5E7A8A', fontWeight: 500 }}>· Fort Worth</span>
+        </div>
+
+        {/* Terminal selector */}
         <select
           value={terminalId}
           onChange={e => setTerminalId(e.target.value)}
-          style={{
-            backgroundColor: C.panel, color: C.text, border: `1px solid ${C.amber}`,
-            borderRadius: '100px', padding: '3px 14px', fontSize: '12px', cursor: 'pointer', outline: 'none',
-          }}
+          style={selectStyle}
         >
           {TERMINALS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
 
-        {/* WEEK OF date picker */}
+        {/* Week of date picker */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '10px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
-            Week of
-          </span>
+          <span style={labelStyle}>Week of</span>
           <input
             type="date"
             value={startDate}
             onChange={e => setStartDate(e.target.value)}
             style={{
-              backgroundColor: C.panel, color: C.text,
-              border: `1px solid ${C.border}`, borderRadius: '4px',
-              padding: '2px 6px', fontSize: '11px', fontFamily: 'monospace',
-              colorScheme: 'dark', outline: 'none', cursor: 'pointer',
+              backgroundColor: '#EEF3F6', color: '#063A52',
+              border: '1px solid rgba(0,79,113,.13)', borderRadius: '9px',
+              padding: '5px 10px', fontSize: '12px', fontFamily: "'Montserrat',sans-serif",
+              colorScheme: 'light', outline: 'none', cursor: 'pointer',
             }}
           />
         </div>
 
         {/* Tab bar */}
-        <div style={{ display: 'flex', gap: '2px', marginLeft: '8px' }}>
+        <div style={{ display: 'flex', gap: '0px', marginLeft: '8px' }}>
           {TABS.map(tab => {
             const active = activeTab === tab;
             return (
@@ -129,11 +150,12 @@ export default function AppShell({
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 style={{
-                  padding: '4px 13px', fontSize: '10px', fontFamily: 'monospace',
-                  fontWeight: active ? 600 : 'normal', letterSpacing: '0.07em',
-                  border: 'none', borderRadius: '3px', cursor: 'pointer',
-                  backgroundColor: active ? C.amber : 'transparent',
-                  color:           active ? '#000'   : C.secondary,
+                  padding: '6px 14px', fontSize: '12px', fontFamily: "'Montserrat',sans-serif",
+                  fontWeight: active ? 700 : 600, letterSpacing: '.5px',
+                  border: 'none', borderBottom: active ? '2px solid #00B398' : '2px solid transparent',
+                  cursor: 'pointer', borderRadius: 0,
+                  backgroundColor: active ? '#FFFFFF' : 'transparent',
+                  color: active ? '#004F71' : '#5E7A8A',
                   transition: 'all 0.12s',
                 }}
               >
@@ -144,19 +166,12 @@ export default function AppShell({
         </div>
 
         {/* Start slot selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-          <span style={{ fontSize: '10px', color: C.amber, textTransform: 'uppercase', letterSpacing: '0.08em', flexShrink: 0 }}>
-            Start
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={labelStyle}>Start</span>
           <select
             value={startSlot ?? 'null'}
             onChange={e => setStartSlot(e.target.value === 'null' ? null : e.target.value)}
-            style={{
-              backgroundColor: C.panel, color: C.text,
-              border: `1px solid ${C.border}`, borderRadius: '4px',
-              padding: '2px 6px', fontSize: '11px', fontFamily: 'monospace',
-              colorScheme: 'dark', outline: 'none', cursor: 'pointer',
-            }}
+            style={selectStyle}
           >
             <option value="null">Full day</option>
             <option value="00-05">00:00</option>
@@ -173,12 +188,12 @@ export default function AppShell({
               key={n}
               onClick={() => setPlanDays(n)}
               style={{
-                padding: '3px 11px', fontSize: '11px', borderRadius: '100px',
-                border: `1px solid ${planDays === n ? C.amber : C.borderEm}`,
-                cursor: 'pointer', fontFamily: 'monospace',
-                backgroundColor: planDays === n ? C.amber : 'transparent',
-                color:           planDays === n ? '#000'   : C.secondary,
-                fontWeight:      planDays === n ? '600'    : 'normal',
+                padding: '4px 12px', fontSize: '11px', borderRadius: '100px',
+                border: `1px solid ${planDays === n ? '#004F71' : 'rgba(0,79,113,.13)'}`,
+                cursor: 'pointer', fontFamily: "'Montserrat',sans-serif",
+                backgroundColor: planDays === n ? '#004F71' : 'transparent',
+                color:           planDays === n ? '#FFFFFF' : '#5E7A8A',
+                fontWeight:      planDays === n ? 700 : 600,
                 transition: 'all 0.15s',
               }}
             >
@@ -186,6 +201,14 @@ export default function AppShell({
             </button>
           ))}
         </div>
+
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
+
+        {/* Dashboard link */}
+        <a href="/Terminal-Dashboard/" style={{ fontSize: '13px', fontWeight: 700, color: '#5E7A8A', textDecoration: 'none', letterSpacing: '.3px' }}>
+          ← Dashboard
+        </a>
       </header>
 
       {/* ── Body ────────────────────────────────────────────────── */}
@@ -197,7 +220,7 @@ export default function AppShell({
             {/* Left sidebar */}
             <div style={{
               width: SIDEBAR_W, flexShrink: 0,
-              backgroundColor: C.sidebar, borderRight: `1px solid ${C.border}`,
+              backgroundColor: '#FFFFFF', borderRight: `1px solid ${C.border}`,
               overflowY: 'auto',
             }}>
               <SidebarSection label="Opening Inventory" open={open.inventory} onToggle={() => toggle('inventory')}>
@@ -239,12 +262,12 @@ export default function AppShell({
                   style={{
                     width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                     padding: '10px 18px', background: 'none', border: 'none', cursor: 'pointer',
-                    color: C.amber, fontSize: '11px', fontWeight: '600',
-                    letterSpacing: '0.08em', textTransform: 'uppercase',
+                    color: '#004F71', fontSize: '10px', fontWeight: 700,
+                    letterSpacing: '1.4px', textTransform: 'uppercase',
                   }}
                 >
                   <span>Blend Plan Summary</span>
-                  <span style={{ fontSize: '12px', color: C.secondary, fontWeight: 'normal' }}>
+                  <span style={{ fontSize: '12px', color: '#9DB0BC', fontWeight: 'normal' }}>
                     {summaryOpen ? '▲' : '▼'}
                   </span>
                 </button>
