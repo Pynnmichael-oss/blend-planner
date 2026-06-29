@@ -39,6 +39,7 @@ export function buildPlanGrid({
   startSlot = null,
   specCeiling = 9.0,
   blendTarget = 8.75,
+  transfers = {},
 }) {
   // Inventory tracked as pumpable barrels above heel throughout.
   // heel is added back only for TOV in blend calculations.
@@ -295,6 +296,15 @@ export function buildPlanGrid({
         const primaryLift = handoffRackId ? (totalLifting - handoffVolume) : totalLifting;
         const handoffLift = handoffRackId ? handoffVolume : 0;
 
+        // ── Transfer in-map for this period ──────────────────────────
+        const transferInMap = {};
+        for (const [key, t] of Object.entries(transfers)) {
+          const [fromId, tDate, tSlot] = key.split('|');
+          if (tDate === date && tSlot === timeSlot && t?.volume > 0) {
+            transferInMap[t.toTankId] = (transferInMap[t.toTankId] ?? 0) + t.volume;
+          }
+        }
+
         // ── Build one TimePeriod per tank ─────────────────────────────
         for (const tank of product.tanks) {
           const manualKey    = `${tank.id}-${date}-${timeSlot}`;
@@ -341,15 +351,36 @@ export function buildPlanGrid({
             if (nextTank) (receiptAssignment[nextTank.id] ??= []).push({ volume: spillVolume, rvp: spillRvp });
           }
 
-          const pumpableClosing = Math.max(opening + cappedReceipts + rackLoadings, 0);
+          const transferOutVol = transfers[`${tank.id}|${date}|${timeSlot}`]?.volume ?? 0;
+          const transferInVol  = transferInMap[tank.id] ?? 0;
+
+          const pumpableClosing = Math.max(
+            opening + cappedReceipts + rackLoadings - transferOutVol + transferInVol, 0
+          );
           // opening is already pumpable above heel — no further heel subtraction needed
 
-          const closingRVP = calcClosingRVP({
+          let closingRVP = calcClosingRVP({
             openingRVP,
             openingVolume: opening,
             heel: tank.heel,
             receipts: cappedTankReceipts,
           });
+
+          if (transferInVol > 0) {
+            const sourceEntry = Object.entries(transfers).find(([k, t]) => {
+              const [, tDate, tSlot] = k.split('|');
+              return t?.toTankId === tank.id && tDate === date && tSlot === timeSlot;
+            });
+            const fromTankId = sourceEntry?.[0]?.split('|')[0];
+            const sourceRVP  = lastPeriod[fromTankId]?.closingRVP ?? 0;
+            if (fromTankId && sourceRVP > 0) {
+              const baseVol    = opening + cappedReceipts;
+              const blendedVol = baseVol + transferInVol;
+              closingRVP = blendedVol > 0
+                ? (closingRVP * baseVol + sourceRVP * transferInVol) / blendedVol
+                : closingRVP;
+            }
+          }
 
           const fillPct = pumpableMax > 0 ? pumpableClosing / pumpableMax : 0;
           const space   = pumpableMax - pumpableClosing;
@@ -443,6 +474,8 @@ export function buildPlanGrid({
             isManualIdle,
             manualIdle: isManualIdle,
             manualRack: manual.manualRack ?? false,
+            transferOutVol,
+            transferInVol,
             spillVolume,
             spillWarning: spillVolume > 0,
             belowHeel: false,

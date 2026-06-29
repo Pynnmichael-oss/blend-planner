@@ -73,6 +73,7 @@ export default function AppShell({
   liftings, setLiftings,
   planDays, setPlanDays,
   grid, toggleBlend, toggleIdle, toggleRack,
+  transfers, setTransfer,
   receiptAllocations, rackTankAssignments,
   setReceiptAllocation, setRackTank,
   parsedReceipts, setParsedReceipts,
@@ -261,6 +262,9 @@ export default function AppShell({
                   toggleBlend={toggleBlend}
                   toggleIdle={toggleIdle}
                   onToggleRack={toggleRack}
+                  transfers={transfers}
+                  setTransfer={setTransfer}
+                  blendTarget={blendTarget}
                   receipts={receipts}
                   liftings={liftings}
                   receiptAllocations={receiptAllocations}

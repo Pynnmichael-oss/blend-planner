@@ -91,6 +91,8 @@ export default function AllocationPanel({
   receiptsForPeriod, liftingForPeriod,
   receiptAllocations, rackTankAssignments,
   setReceiptAllocation, setRackTank,
+  transfers = {}, setTransfer,
+  blendTarget = 8.75,
   allTankPeriods = [],
   onClose,
 }) {
@@ -121,6 +123,10 @@ export default function AllocationPanel({
   const [handoffVol,  setHandoffVol]  = useState(existingAssignment?.handoffVolume ?? '');
   const [showHandoff, setShowHandoff] = useState(!!(existingAssignment?.handoff));
 
+  const existingTransfer = transfers[`${period?.tankId}|${period?.date}|${period?.timeSlot}`] ?? null;
+  const [transferTo,  setTransferTo]  = useState(existingTransfer?.toTankId ?? null);
+  const [transferVol, setTransferVol] = useState(existingTransfer?.volume   ?? '');
+
   if (!period || !product) return null;
 
   const isConflict = period.status === 'CONFLICT';
@@ -140,6 +146,13 @@ export default function AllocationPanel({
         showHandoff && handoffTank ? handoffTank : null,
         hv
       );
+    }
+    if (setTransfer) {
+      if (transferTo && parseFloat(transferVol) > 0) {
+        setTransfer(period.tankId, period.date, period.timeSlot, transferTo, parseFloat(transferVol));
+      } else {
+        setTransfer(period.tankId, period.date, period.timeSlot, null, 0);
+      }
     }
     onClose();
   }
@@ -352,6 +365,56 @@ export default function AllocationPanel({
             </div>
           )}
         </div>
+
+        {/* Section C: Transfer */}
+        {(() => {
+          const destTanks = tanks.filter(t =>
+            t.id !== period.tankId && !blendingTankIds.has(t.id)
+          );
+          if (!destTanks.length) return null;
+          const sourceRVP = period.closingRVP;
+          const warnRVP   = transferTo != null && sourceRVP < blendTarget;
+          return (
+            <div>
+              <div style={sectionLabel}>Transfer (this period only)</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', color: C.muted, fontFamily: "'Montserrat',sans-serif" }}>To</span>
+                <select
+                  value={transferTo ?? ''}
+                  onChange={e => setTransferTo(e.target.value || null)}
+                  style={{
+                    backgroundColor: C.bg, color: C.text, fontSize: '11px',
+                    border: `1px solid ${C.border}`, borderRadius: '6px',
+                    padding: '3px 8px', fontFamily: "'Montserrat',sans-serif",
+                    cursor: 'pointer', outline: 'none',
+                  }}
+                >
+                  <option value="">— none —</option>
+                  {destTanks.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                </select>
+                <NumInput
+                  value={transferVol}
+                  onChange={setTransferVol}
+                  color={C.blue}
+                />
+                <span style={{ fontSize: '11px', color: C.faint, fontFamily: "'Montserrat',sans-serif" }}>bbl</span>
+                {(transferTo || transferVol) && (
+                  <button
+                    onClick={() => { setTransferTo(null); setTransferVol(''); }}
+                    style={{ fontSize: '11px', color: C.faint, background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Montserrat',sans-serif" }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {warnRVP && (
+                <div style={{ fontSize: '11px', color: C.amber, marginTop: '2px', fontFamily: "'Montserrat',sans-serif" }}>
+                  ⚠ Source RVP {sourceRVP.toFixed(2)} is below blend target — transferring forfeits uncaptured margin
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Footer */}
         <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '12px' }}>

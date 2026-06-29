@@ -92,6 +92,8 @@ export default function BlendPlannerGrid({
   receipts = [], liftings = [],
   receiptAllocations = {}, rackTankAssignments = {},
   setReceiptAllocation, setRackTank,
+  transfers = {}, setTransfer,
+  blendTarget = 8.75,
 }) {
   const [selectedPeriod, setSelectedPeriod] = useState(null);
 
@@ -231,6 +233,9 @@ export default function BlendPlannerGrid({
           rackTankAssignments={rackTankAssignments}
           setReceiptAllocation={setReceiptAllocation}
           setRackTank={setRackTank}
+          transfers={transfers}
+          setTransfer={setTransfer}
+          blendTarget={blendTarget}
           onClose={() => setSelectedPeriod(null)}
         />
       )}

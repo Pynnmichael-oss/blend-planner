@@ -212,14 +212,20 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
               <div style={{ fontSize: '8px', color: '#5E7A8A', letterSpacing: '0.06em', marginTop: '1px' }}>BELOW HEEL</div>
             )}
 
-            {/* Flows: ↑ receipts, ↓ liftings, ↗ spill */}
-            {(recVol > 0 || liftVol < 0 || entry.spillVolume > 0) && (
+            {/* Flows: ↑ receipts, ↓ liftings, ↗ spill, → transfer out, ← transfer in */}
+            {(recVol > 0 || liftVol < 0 || entry.spillVolume > 0 || entry.transferOutVol > 0 || entry.transferInVol > 0) && (
               <div className="font-mono" style={{ fontSize: '11px', fontWeight: 700, color: '#9DB0BC', marginTop: '2px' }}>
                 {recVol > 0 && <span style={{ color: '#00B398' }}>↑{Math.round(recVol).toLocaleString()}</span>}
                 {recVol > 0 && liftVol < 0 && ' '}
                 {liftVol < 0 && <span style={{ color: '#5E7A8A' }}>↓{Math.round(Math.abs(liftVol)).toLocaleString()}</span>}
                 {entry.spillVolume > 0 && (
                   <span style={{ color: '#C0882E' }}>{(recVol > 0 || liftVol < 0) ? ' ' : ''}↗{Math.round(entry.spillVolume).toLocaleString()} spill</span>
+                )}
+                {entry.transferOutVol > 0 && (
+                  <span style={{ color: C.muted }}>{(recVol > 0 || liftVol < 0 || entry.spillVolume > 0) ? ' ' : ''}→{Math.round(entry.transferOutVol).toLocaleString()}</span>
+                )}
+                {entry.transferInVol > 0 && (
+                  <span style={{ color: C.blue }}>{(recVol > 0 || liftVol < 0 || entry.spillVolume > 0 || entry.transferOutVol > 0) ? ' ' : ''}←{Math.round(entry.transferInVol).toLocaleString()}</span>
                 )}
               </div>
             )}

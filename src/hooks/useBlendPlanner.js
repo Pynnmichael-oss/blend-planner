@@ -38,6 +38,8 @@ export default function useBlendPlanner() {
   const [startSlot, setStartSlot] = useState(null);
   const [specCeiling, setSpecCeiling] = useState(9.0);
   const [blendTarget, setBlendTarget] = useState(8.75);
+  // Shape: "tankId|date|timeSlot" → { toTankId, volume }
+  const [transfers, setTransfers] = useState({});
 
   const terminalConfig = TERMINAL_CONFIGS[terminalId];
 
@@ -45,11 +47,11 @@ export default function useBlendPlanner() {
     () => buildPlanGrid({
       terminalConfig, openingInventory, receipts, planDays, startDate,
       manualInputs, liftings, receiptAllocations, rackTankAssignments,
-      startSlot, specCeiling, blendTarget,
+      startSlot, specCeiling, blendTarget, transfers,
     }),
     [terminalConfig, openingInventory, receipts, planDays, startDate,
      manualInputs, liftings, receiptAllocations, rackTankAssignments,
-     startSlot, specCeiling, blendTarget],
+     startSlot, specCeiling, blendTarget, transfers],
   );
 
   function toggleBlend(tankId, date, timeSlot) {
@@ -92,6 +94,14 @@ export default function useBlendPlanner() {
     });
   }
 
+  function setTransfer(fromTankId, date, timeSlot, toTankId, volume) {
+    const key = `${fromTankId}|${date}|${timeSlot}`;
+    setTransfers(prev => ({
+      ...prev,
+      [key]: volume > 0 ? { toTankId, volume } : undefined,
+    }));
+  }
+
   function resetLiftings() {
     setLiftings(buildLiftingsGridWithBase(terminalConfig, startDate, planDays, DEFAULT_DAILY_BASE));
     setRackTankAssignments({});
@@ -119,6 +129,7 @@ export default function useBlendPlanner() {
     setTerminalId, setStartDate, setOpeningInventory, setReceipts,
     setPlanDays, setLiftings, resetLiftings,
     toggleBlend, toggleIdle, toggleRack,
+    transfers, setTransfer,
     setReceiptAllocation, setRackTank,
     parsedReceipts, setParsedReceipts,
     rvpValues, setRvpValues,
