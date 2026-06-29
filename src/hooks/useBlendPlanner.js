@@ -72,6 +72,26 @@ export default function useBlendPlanner() {
     }));
   }
 
+  function toggleRack(tankId, date, timeSlot) {
+    const key = `${tankId}-${date}-${timeSlot}`;
+    setManualInputs(prev => {
+      const current = prev[key]?.manualRack ?? false;
+      const productKey = Object.entries(terminalConfig.products)
+        .find(([, p]) => p.tanks.some(t => t.id === tankId))?.[0];
+      const updated = { ...prev };
+      if (productKey) {
+        terminalConfig.products[productKey].tanks.forEach(t => {
+          const k = `${t.id}-${date}-${timeSlot}`;
+          if (updated[k]?.manualRack) {
+            updated[k] = { ...updated[k], manualRack: false };
+          }
+        });
+      }
+      updated[key] = { ...updated[key], manualRack: !current };
+      return updated;
+    });
+  }
+
   function resetLiftings() {
     setLiftings(buildLiftingsGridWithBase(terminalConfig, startDate, planDays, DEFAULT_DAILY_BASE));
     setRackTankAssignments({});
@@ -98,7 +118,7 @@ export default function useBlendPlanner() {
     grid,
     setTerminalId, setStartDate, setOpeningInventory, setReceipts,
     setPlanDays, setLiftings, resetLiftings,
-    toggleBlend, toggleIdle,
+    toggleBlend, toggleIdle, toggleRack,
     setReceiptAllocation, setRackTank,
     parsedReceipts, setParsedReceipts,
     rvpValues, setRvpValues,

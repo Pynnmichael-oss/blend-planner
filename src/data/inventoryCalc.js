@@ -231,6 +231,15 @@ export function buildPlanGrid({
         // Determine rack tank for this period
         // Manual override takes precedence
         if (!primaryRackId) {
+          // Cell-level RACK button: highest priority after rackTankAssignments
+          const manualRackTank = product.tanks.find(t =>
+            manualInputs[`${t.id}-${date}-${timeSlot}`]?.manualRack === true &&
+            !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive
+          );
+          if (manualRackTank) primaryRackId = manualRackTank.id;
+        }
+
+        if (!primaryRackId) {
           // post-blend rack handoff: blended tank takes rack immediately
           // — it now carries the highest RVP and should ship first
           const justFinishedBlend = product.tanks.find(t => {
@@ -433,6 +442,7 @@ export function buildPlanGrid({
             status,
             isManualIdle,
             manualIdle: isManualIdle,
+            manualRack: manual.manualRack ?? false,
             spillVolume,
             spillWarning: spillVolume > 0,
             belowHeel: false,

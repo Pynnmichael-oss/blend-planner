@@ -40,7 +40,7 @@ const INV_COLOR = {
   CONFLICT: '#92660a',
 };
 
-export default function TankRow({ tank, periods, cells, openingFillPct, toggleBlend, onToggleIdle, onCellClick, dateIndexMap }) {
+export default function TankRow({ tank, periods, cells, openingFillPct, toggleBlend, onToggleIdle, onToggleRack, onCellClick, dateIndexMap }) {
   return (
     <tr>
       {/* ── Row header ─── */}
@@ -135,6 +135,19 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
                 }}
               >
                 IDLE
+              </span>
+              <span
+                onClick={e => { e.stopPropagation(); onToggleRack(tank.id, entry.date, entry.timeSlot); }}
+                title={entry.manualRack ? 'Remove rack override' : 'Force rack'}
+                style={{
+                  fontSize: '9px', padding: '1px 5px', borderRadius: '3px',
+                  backgroundColor: entry.manualRack ? 'rgba(22,101,52,.20)' : 'rgba(0,79,113,.07)',
+                  color: entry.manualRack ? '#22c55e' : '#9DB0BC',
+                  fontFamily: "'Montserrat',sans-serif", cursor: 'pointer', userSelect: 'none',
+                  display: entry.blendActive ? 'none' : 'inline-block',
+                }}
+              >
+                RACK
               </span>
             </div>
 
