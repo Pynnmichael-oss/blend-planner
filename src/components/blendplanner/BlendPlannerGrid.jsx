@@ -8,7 +8,9 @@ const C = {
   border: 'rgba(0,79,113,.13)',
   text:   '#063A52',
   muted:  '#5E7A8A',
+  faint:  '#9DB0BC',
   amber:  '#004F71',
+  blue:   '#004F71',
 };
 
 const WEEKDAY_ABBR = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
@@ -96,6 +98,7 @@ export default function BlendPlannerGrid({
   blendTarget = 8.75,
 }) {
   const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const [collapsed, setCollapsed] = useState({});
 
   if (!grid?.length) {
     return <div style={{ color: C.muted, fontSize: '12px', padding: '8px 0' }}>No grid data.</div>;
@@ -138,82 +141,119 @@ export default function BlendPlannerGrid({
               </div>
             )}
 
-            {/* Product section header */}
-            <div style={{
-              fontSize: '12px', fontWeight: 800, textTransform: 'uppercase',
-              letterSpacing: '1.6px', marginBottom: '8px', color: '#004F71',
-            }}>
-              {product.label}
+            {/* Product section header — clickable to collapse */}
+            <div
+              onClick={() => setCollapsed(prev => ({ ...prev, [productKey]: !prev[productKey] }))}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '6px 0', cursor: 'pointer', userSelect: 'none',
+              }}
+            >
+              <span style={{
+                fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px',
+                textTransform: 'uppercase', color: C.text,
+              }}>
+                {product.label}
+              </span>
+              <span style={{ fontSize: '10px', color: C.muted }}>
+                {collapsed[productKey] ? '▶ show' : '▼ hide'}
+              </span>
             </div>
 
-            <div style={{ overflowX: 'auto', marginBottom: '16px' }}>
-              <table style={{ borderCollapse: 'collapse', fontSize: '11px' }}>
-                <thead>
-                  {/* Row 1: weekday + date, colspan = 4 per day */}
-                  <tr>
-                    <th style={{
-                      ...thBase, width: '88px', minWidth: '88px', textAlign: 'left',
-                      backgroundColor: '#EEF3F6',
-                      borderRight: `0.5px solid ${C.border}`,
-                    }} />
-                    {dateSpans.map(({ date, count }, idx) => {
-                      const { weekday, monthDay } = dateHeaderParts(date);
-                      const dayBg = idx % 2 === 0 ? '#FFFFFF' : '#F5F8FA';
-                      return (
-                        <th key={date} colSpan={count} style={{
-                          ...thBase, fontWeight: 'bold',
-                          backgroundColor: dayBg,
-                          borderRight: `0.5px solid ${C.border}`,
-                          borderLeft: `0.5px solid ${C.border}`,
-                        }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', padding: '2px 0' }}>
-                            <span style={{ color: '#00B398', fontSize: '11px', fontWeight: 800, letterSpacing: '0.06em' }}>
-                              {weekday}
-                            </span>
-                            <span style={{ color: '#063A52', fontSize: '12px', fontWeight: 700 }}>{monthDay}</span>
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                  {/* Row 2: slot labels */}
-                  <tr>
-                    <th style={{ ...thBase, textAlign: 'left', color: '#5E7A8A', backgroundColor: '#EEF3F6', borderRight: `0.5px solid ${C.border}`, fontSize: '10px' }}>
-                      Tank
-                    </th>
-                    {periods.map((p) => {
-                      const dayIdx = dateIndexMap[p.date] ?? 0;
-                      const dayBg  = dayIdx % 2 === 0 ? '#FFFFFF' : '#F5F8FA';
-                      return (
-                        <th key={p.key} style={{
-                          ...thBase, fontSize: '10px', fontWeight: 600, color: '#5E7A8A',
-                          backgroundColor: dayBg,
-                          borderRight: `0.5px solid ${C.border}`,
-                        }}>
-                          {SLOT_LABEL[p.timeSlot] ?? p.timeSlot}
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {product.tanks.map(tank => (
-                    <TankRow
-                      key={tank.id}
-                      tank={tank}
-                      periods={periods}
-                      cells={cellsByTank[tank.id]}
-                      openingFillPct={openingPct[tank.id] ?? 0}
-                      toggleBlend={toggleBlend}
-                      onToggleIdle={toggleIdle}
-                      onToggleRack={onToggleRack}
-                      onCellClick={setSelectedPeriod}
-                      dateIndexMap={dateIndexMap}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {!collapsed[productKey] && (
+              <div style={{ overflowX: 'auto', marginBottom: '16px' }}>
+                <table style={{ borderCollapse: 'collapse', fontSize: '11px' }}>
+                  <thead>
+                    {/* Row 1: weekday + date, colspan = 4 per day */}
+                    <tr>
+                      <th style={{
+                        ...thBase, width: '88px', minWidth: '88px', textAlign: 'left',
+                        backgroundColor: '#EEF3F6',
+                        borderRight: `0.5px solid ${C.border}`,
+                      }} />
+                      {dateSpans.map(({ date, count }, idx) => {
+                        const { weekday, monthDay } = dateHeaderParts(date);
+                        const dayBg = idx % 2 === 0 ? '#FFFFFF' : '#F5F8FA';
+                        return (
+                          <th key={date} colSpan={count} style={{
+                            ...thBase, fontWeight: 'bold',
+                            backgroundColor: dayBg,
+                            borderRight: `0.5px solid ${C.border}`,
+                            borderLeft: `0.5px solid ${C.border}`,
+                          }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1px', padding: '2px 0' }}>
+                              <span style={{ color: '#00B398', fontSize: '11px', fontWeight: 800, letterSpacing: '0.06em' }}>
+                                {weekday}
+                              </span>
+                              <span style={{ color: '#063A52', fontSize: '12px', fontWeight: 700 }}>{monthDay}</span>
+                            </div>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                    {/* Row 2: slot labels */}
+                    <tr>
+                      <th style={{ ...thBase, textAlign: 'left', color: '#5E7A8A', backgroundColor: '#EEF3F6', borderRight: `0.5px solid ${C.border}`, fontSize: '10px' }}>
+                        Tank
+                      </th>
+                      {periods.map((p) => {
+                        const dayIdx = dateIndexMap[p.date] ?? 0;
+                        const dayBg  = dayIdx % 2 === 0 ? '#FFFFFF' : '#F5F8FA';
+                        return (
+                          <th key={p.key} style={{
+                            ...thBase, fontSize: '10px', fontWeight: 600, color: '#5E7A8A',
+                            backgroundColor: dayBg,
+                            borderRight: `0.5px solid ${C.border}`,
+                          }}>
+                            {SLOT_LABEL[p.timeSlot] ?? p.timeSlot}
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {product.tanks.map(tank => (
+                      <TankRow
+                        key={tank.id}
+                        tank={tank}
+                        periods={periods}
+                        cells={cellsByTank[tank.id]}
+                        openingFillPct={openingPct[tank.id] ?? 0}
+                        toggleBlend={toggleBlend}
+                        onToggleIdle={toggleIdle}
+                        onToggleRack={onToggleRack}
+                        onCellClick={setSelectedPeriod}
+                        dateIndexMap={dateIndexMap}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {collapsed[productKey] && (
+              <div style={{
+                display: 'flex', gap: '16px', padding: '4px 0 8px',
+                fontSize: '11px', color: C.muted, fontFamily: 'monospace',
+              }}>
+                {product.tanks.map(tank => {
+                  const latestPeriod = grid.filter(e => e.tankId === tank.id).at(-1);
+                  return (
+                    <span key={tank.id}>
+                      <span style={{ color: C.text }}>{tank.label}</span>
+                      {' '}
+                      {latestPeriod
+                        ? Math.round(latestPeriod.closingInventory).toLocaleString()
+                        : '—'} bbl
+                      {' · '}
+                      <span style={{ color: C.blue }}>
+                        RVP {latestPeriod?.closingRVP?.toFixed(2) ?? '—'}
+                      </span>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}
