@@ -150,7 +150,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
 
             {/* RVP */}
             <div className="font-mono" style={{ fontSize: '11px', fontWeight: 700, color: '#004F71', lineHeight: 1.3 }}>
-              RVP {entry.closingRVP.toFixed(3)}
+              RVP {entry.closingRVP.toFixed(2)}
             </div>
 
             {/* Post-blend butane addition */}
@@ -160,7 +160,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
                   +{Math.round(entry.postBlendButane).toLocaleString()} bbl · {entry.postBlendTrucks} trucks
                 </div>
                 <div style={{ fontSize: '9px', color: '#004F71', fontFamily: 'monospace' }}>
-                  RVP → {entry.postBlendRVP?.toFixed(3)}
+                  RVP → {entry.postBlendRVP?.toFixed(2)}
                 </div>
               </>
             )}
@@ -177,6 +177,9 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
                     maxWidth: '140px',
                   }}>
                     {r.batchCode ?? '—'}
+                    <span style={{ color: C.muted, marginLeft: '4px' }}>
+                      {r.volume ? Math.round(r.volume).toLocaleString() : ''}
+                    </span>
                   </div>
                 ))}
               </div>

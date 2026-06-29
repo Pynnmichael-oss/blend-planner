@@ -335,14 +335,44 @@ export default function AllocationPanel({
         </div>
 
         {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: `1px solid ${C.border}`, paddingTop: '10px' }}>
-          <button onClick={onClose} style={{ padding: '4px 14px', fontSize: '12px', backgroundColor: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: '4px', cursor: 'pointer' }}>
-            Cancel
-          </button>
-          <button onClick={handleApply} style={{ padding: '4px 14px', fontSize: '12px', backgroundColor: C.amber, color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-            Apply
-          </button>
-        </div>
+        {(() => {
+          const totalUnallocated = (receiptsForPeriod ?? []).reduce(
+            (sum, { receipt, sliceVolume }) => {
+              const allocated = tanks.reduce(
+                (s, t) => s + (parseFloat(receiptLocal[receipt.batchCode]?.[t.id]) || 0), 0
+              );
+              return sum + Math.max(0, sliceVolume - allocated);
+            }, 0
+          );
+          const receiptFullyAllocated = totalUnallocated < 0.5;
+          const applyDisabled = receiptsForPeriod?.length > 0 && !receiptFullyAllocated;
+          return (
+            <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '10px' }}>
+              {!receiptFullyAllocated && (
+                <div style={{ fontSize: '11px', color: C.amber, textAlign: 'right', marginBottom: '6px' }}>
+                  ⚠ {Math.round(totalUnallocated).toLocaleString()} bbl unallocated — assign all volume before applying
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button onClick={onClose} style={{ padding: '4px 14px', fontSize: '12px', backgroundColor: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: '4px', cursor: 'pointer' }}>
+                  Cancel
+                </button>
+                <button
+                  onClick={applyDisabled ? undefined : handleApply}
+                  disabled={applyDisabled}
+                  style={{
+                    padding: '4px 14px', fontSize: '12px', border: 'none', borderRadius: '4px', fontWeight: 'bold',
+                    backgroundColor: applyDisabled ? C.border : C.amber,
+                    color: applyDisabled ? C.muted : '#000',
+                    cursor: applyDisabled ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
