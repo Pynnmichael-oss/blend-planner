@@ -275,21 +275,25 @@ export default function AppShell({
               </div>
 
               {/* Blend Plan Summary — collapsible */}
-              <div style={{ borderTop: `1px solid ${C.border}` }}>
-                <button
+              <div>
+                <div
                   onClick={() => setSummaryOpen(v => !v)}
                   style={{
-                    width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '10px 18px', background: 'none', border: 'none', cursor: 'pointer',
-                    color: '#004F71', fontSize: '10px', fontWeight: 700,
-                    letterSpacing: '1.4px', textTransform: 'uppercase',
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '6px 18px', cursor: 'pointer', userSelect: 'none',
+                    borderTop: `1px solid ${C.border}`,
                   }}
                 >
-                  <span>Blend Plan Summary</span>
-                  <span style={{ fontSize: '12px', color: '#9DB0BC', fontWeight: 'normal' }}>
-                    {summaryOpen ? '▲' : '▼'}
+                  <span style={{
+                    fontSize: '11px', fontWeight: 700, letterSpacing: '1.5px',
+                    textTransform: 'uppercase', color: C.text,
+                  }}>
+                    Blend Plan Summary
                   </span>
-                </button>
+                  <span style={{ fontSize: '10px', color: C.secondary }}>
+                    {summaryOpen ? '▼ hide' : '▶ show'}
+                  </span>
+                </div>
                 <div style={{ maxHeight: summaryOpen ? '4000px' : '0', overflow: 'hidden', transition: 'max-height 0.25s ease' }}>
                   <div style={{ padding: '0 18px 24px' }}>
                     <BlendPlanSummary
