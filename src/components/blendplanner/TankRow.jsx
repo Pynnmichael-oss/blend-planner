@@ -170,14 +170,14 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
               <div style={{ marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 {entry.receipts.map((r, i) => (
                   <div key={i} style={{
-                    fontSize: '10px', fontWeight: 700, fontFamily: "'Montserrat',sans-serif", color: '#004F71',
-                    backgroundColor: 'rgba(0,79,113,.10)', border: '1px solid rgba(0,79,113,.25)',
-                    borderRadius: '3px', padding: '2px 6px',
+                    fontSize: '8px', fontFamily: 'monospace', color: C.muted,
+                    backgroundColor: 'transparent', border: 'none',
+                    padding: '1px 0',
                     overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     maxWidth: '140px',
                   }}>
                     {r.batchCode ?? '—'}
-                    <span style={{ color: C.muted, marginLeft: '4px' }}>
+                    <span style={{ color: C.text, marginLeft: '4px' }}>
                       {r.volume ? Math.round(r.volume).toLocaleString() : ''}
                     </span>
                   </div>
