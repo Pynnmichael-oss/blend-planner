@@ -21,12 +21,13 @@ const sectionLabel = {
   fontFamily: "'Montserrat',sans-serif",
 };
 
-function NumInput({ value, onChange, color = C.text, disabled = false }) {
+function NumInput({ value, onChange, color = C.text, disabled = false, max }) {
   return (
     <input
       type="number"
       value={value ?? ''}
       disabled={disabled}
+      max={max}
       onChange={e => onChange(e.target.value)}
       className="font-mono"
       style={{
@@ -127,6 +128,9 @@ export default function AllocationPanel({
   const [transferTo,  setTransferTo]  = useState(existingTransfer?.toTankId ?? null);
   const [transferVol, setTransferVol] = useState(existingTransfer?.volume   ?? '');
 
+  const sourcePeriod = allTankPeriods.find(e => e.tankId === period?.tankId);
+  const maxTransfer  = Math.max(0, sourcePeriod?.openingInventory ?? 0);
+
   if (!period || !product) return null;
 
   const isConflict = period.status === 'CONFLICT';
@@ -148,8 +152,9 @@ export default function AllocationPanel({
       );
     }
     if (setTransfer) {
-      if (transferTo && parseFloat(transferVol) > 0) {
-        setTransfer(period.tankId, period.date, period.timeSlot, transferTo, parseFloat(transferVol));
+      const clampedVol = Math.min(parseFloat(transferVol) || 0, maxTransfer);
+      if (transferTo && clampedVol > 0) {
+        setTransfer(period.tankId, period.date, period.timeSlot, transferTo, clampedVol);
       } else {
         setTransfer(period.tankId, period.date, period.timeSlot, null, 0);
       }
@@ -377,6 +382,12 @@ export default function AllocationPanel({
           return (
             <div>
               <div style={sectionLabel}>Transfer (this period only)</div>
+              <div style={{ fontSize: '11px', color: C.muted, marginBottom: '4px', fontFamily: "'Montserrat',sans-serif" }}>
+                Available:
+                <span className="font-mono" style={{ color: C.text, marginLeft: '4px' }}>
+                  {maxTransfer.toLocaleString()} bbl
+                </span>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
                 <span style={{ fontSize: '11px', color: C.muted, fontFamily: "'Montserrat',sans-serif" }}>To</span>
                 <select
@@ -394,7 +405,11 @@ export default function AllocationPanel({
                 </select>
                 <NumInput
                   value={transferVol}
-                  onChange={setTransferVol}
+                  max={maxTransfer}
+                  onChange={val => {
+                    const n = Math.min(parseFloat(val) || 0, maxTransfer);
+                    setTransferVol(n > 0 ? String(n) : '');
+                  }}
                   color={C.blue}
                 />
                 <span style={{ fontSize: '11px', color: C.faint, fontFamily: "'Montserrat',sans-serif" }}>bbl</span>
@@ -410,6 +425,11 @@ export default function AllocationPanel({
               {warnRVP && (
                 <div style={{ fontSize: '11px', color: C.amber, marginTop: '2px', fontFamily: "'Montserrat',sans-serif" }}>
                   ⚠ Source RVP {sourceRVP.toFixed(2)} is below blend target — transferring forfeits uncaptured margin
+                </div>
+              )}
+              {parseFloat(transferVol) >= maxTransfer && maxTransfer > 0 && (
+                <div style={{ fontSize: '11px', color: C.red, marginTop: '3px', fontFamily: "'Montserrat',sans-serif" }}>
+                  ⚠ This would empty the tank
                 </div>
               )}
             </div>
