@@ -28,10 +28,12 @@ async function getAccessToken(clientEmail, privateKeyPem) {
   })));
   const signingInput = `${header}.${payload}`;
 
-  const pemBody = privateKeyPem
+  const normalizedPem = privateKeyPem.replace(/\\n/g, '\n');
+  const pemBody = normalizedPem
     .replace(/-----BEGIN PRIVATE KEY-----/, '')
     .replace(/-----END PRIVATE KEY-----/, '')
-    .replace(/\n/g, '');
+    .replace(/\n/g, '')
+    .replace(/\s/g, '');
   const binaryKey = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0));
 
   const cryptoKey = await crypto.subtle.importKey(
