@@ -45,6 +45,10 @@ async function getAccessToken(clientEmail, privateKeyPem) {
     body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
   });
   const data = await resp.json();
+  if (!data.access_token) {
+    console.error('Token exchange failed:', data);
+    throw new Error(`Token exchange failed: ${data.error_description || data.error || JSON.stringify(data)}`);
+  }
   return data.access_token;
 }
 
