@@ -5,20 +5,27 @@
 
 const SHEET_ID = '1siJmeWuFgVCOxK2acali-_wzY8QSJm20OLxJbP3-dfc';
 
+function base64url(input) {
+  return input
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
 let _creds = null;
 export function setGoogleCredentials(creds) { _creds = creds; }
 export function hasGoogleCredentials() { return _creds !== null; }
 
 async function getAccessToken(clientEmail, privateKeyPem) {
   const now = Math.floor(Date.now() / 1000);
-  const header  = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-  const payload = btoa(JSON.stringify({
+  const header  = base64url(btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
+  const payload = base64url(btoa(JSON.stringify({
     iss:   clientEmail,
     scope: 'https://www.googleapis.com/auth/spreadsheets',
     aud:   'https://oauth2.googleapis.com/token',
     exp:   now + 3600,
     iat:   now,
-  }));
+  })));
   const signingInput = `${header}.${payload}`;
 
   const pemBody = privateKeyPem
@@ -36,7 +43,7 @@ async function getAccessToken(clientEmail, privateKeyPem) {
     'RSASSA-PKCS1-v1_5', cryptoKey,
     new TextEncoder().encode(signingInput)
   );
-  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+  const sigB64 = base64url(btoa(String.fromCharCode(...new Uint8Array(signature))));
   const jwt = `${signingInput}.${sigB64}`;
 
   const resp = await fetch('https://oauth2.googleapis.com/token', {
