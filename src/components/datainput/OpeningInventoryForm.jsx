@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import VerticalTankGauge from '../blendplanner/InventoryBar';
+import FuelsManagerUpload from './FuelsManagerUpload';
 
 const C = {
   bg:       '#FFFFFF',
@@ -21,7 +22,9 @@ const inputBase = {
   textAlign: 'right',
 };
 
-export default function OpeningInventoryForm({ openingInventory, terminalConfig, setOpeningInventory, specCeiling, setSpecCeiling, blendTarget, setBlendTarget }) {
+export default function OpeningInventoryForm({ openingInventory, terminalConfig, setOpeningInventory, specCeiling, setSpecCeiling, blendTarget, setBlendTarget, onFuelsManagerConfirm }) {
+  const [fmOpen, setFmOpen] = useState(false);
+
   useEffect(() => {
     setBlendTarget(+(specCeiling - 0.25).toFixed(2));
   }, [specCeiling]);
@@ -40,6 +43,26 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
 
   return (
     <>
+    <div style={{ marginBottom: '10px', borderBottom: `1px solid ${C.border}`, paddingBottom: '10px' }}>
+      <button
+        onClick={() => setFmOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+          padding: 0, fontSize: '9px', color: C.blue, fontWeight: 600,
+          textTransform: 'uppercase', letterSpacing: '1.4px',
+          fontFamily: "'Montserrat',sans-serif",
+        }}
+      >
+        <span>Load FuelsManager Snapshot</span>
+        <span style={{ color: C.muted, fontSize: '10px' }}>{fmOpen ? '▲' : '▼'}</span>
+      </button>
+      {fmOpen && (
+        <div style={{ marginTop: '8px' }}>
+          <FuelsManagerUpload onConfirm={onFuelsManagerConfirm} />
+        </div>
+      )}
+    </div>
     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
       <thead>
         <tr style={{ color: C.muted }}>

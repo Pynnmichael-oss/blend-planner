@@ -37,7 +37,7 @@ The app projects closing inventory and RVP for every tank across every 6-hour pe
 src/
   App.jsx                          — pure wiring: useBlendPlanner → AppShell
   main.jsx                         — React root, imports index.css
-  index.css                        — @import "tailwindcss" only
+  index.css                        — Montserrat import + @import "tailwindcss" + body bg gradient
 
   config/
     fort-worth.json                — LIVE tank data for Fort Worth terminal
@@ -61,7 +61,8 @@ src/
 
   components/
     layout/
-      AppShell.jsx                 — fixed header + 272px sidebar + scrollable main
+      AppShell.jsx                 — auto-height two-row sticky header + 300px sidebar + scrollable main
+      GuideTab.jsx                 — operator reference guide (full-screen, read-only)
     blendplanner/
       BlendPlannerGrid.jsx         — groups grid flat array → per-product tables
       TankRow.jsx                  — renders one <tr>: row header + all period cells
@@ -73,7 +74,7 @@ src/
       ProductSection.jsx           — stub
       RVPDisplay.jsx               — stub
     datainput/
-      OpeningInventoryForm.jsx     — compact tank inventory form, grouped by product
+      OpeningInventoryForm.jsx     — tank inventory form + specCeiling/blendTarget inputs
       T4PasteInput.jsx             — textarea paste → parseT4 → RVP entry → confirm
       LiftingsInput.jsx            — product × period editable liftings table
       TMSLiftingsInput.jsx         — stub
@@ -310,23 +311,30 @@ All state lives in `useBlendPlanner` (src/hooks/useBlendPlanner.js).
 
 ### Layout
 
-Header contains: BLEND PLANNER wordmark · terminal picker · "Week of" date input · tab bar (PLAN / RECEIPTS / LIFTINGS / SUMMARY / GUIDE) · start-slot selector · day-count pills (3d/5d/8d).
+Header is **two rows**, auto-height (no fixed `HEADER_H`), `position: sticky`, `zIndex: 50`.
+
+- **Row 1** (`backgroundColor: #EEF3F6`, `padding: 10px 20px`, `borderBottom: rgba(0,79,113,.08)`): wordmark | divider | page name | terminal selector | "Week of" date picker | spacer | Dashboard link
+- **Row 2** (`backgroundColor: #FFFFFF`, `padding: 4px 20px 0`, `borderBottom: rgba(0,79,113,.13)`): tab bar (PLAN|RECEIPTS|LIFTINGS|SUMMARY|GUIDE) | spacer | START slot selector | day pills (3d/5d/8d)
+- Active tab: `borderBottom: 2px solid #00B398`, `backgroundColor: #EEF3F6`, `color: #004F71`, `fontWeight: 700`
+- Inactive tab: `borderBottom: 2px solid transparent`, `backgroundColor: transparent`, `color: #5E7A8A`
 
 ```
-┌── 48px header ──────────────────────────────────────────────────────────────────┐
-│ BLEND PLANNER  [Fort Worth ▾]  Week of [date]  [PLAN][RECEIPTS][LIFTINGS]...   │
-└─────────────────────────────────────────────────────────────────────────────────┘
+┌── Row 1: wordmark + core controls (#EEF3F6) ────────────────────────────────┐
+│ GLOBAL PARTNERS  Blend Planner  [Fort Worth▾]  Week of [date]  ← Dashboard  │
+├── Row 2: tabs + slot/day controls (#FFFFFF) ────────────────────────────────┤
+│ [PLAN] [RECEIPTS] [LIFTINGS] [SUMMARY] [GUIDE]       Start [▾]  3d 5d [8d]  │
+└─────────────────────────────────────────────────────────────────────────────┘
 
 PLAN tab:
-┌── 300px sidebar ──────────┐  ┌── flex-1 main (scrollable) ──────────────────────┐
-│ ▲ OPENING INVENTORY       │  │  REGULAR                                         │
-│   OpeningInventoryForm    │  │  [table: tanks × periods]                        │
-│   (+ specCeiling,         │  │                                                  │
-│    blendTarget inputs)    │  │  ─────── PREMIUM ────────                        │
-└───────────────────────────┘  │  [table: tanks × periods]                        │
-                               │                                                  │
-                               │  ▼ Blend Plan Summary (collapsible)              │
-                               └──────────────────────────────────────────────────┘
+┌── 300px sidebar (#EEF3F6) ────┐  ┌── flex-1 main (#FFFFFF, scrollable) ─────┐
+│ ▲ OPENING INVENTORY           │  │  REGULAR                                  │
+│   OpeningInventoryForm        │  │  [table: tanks × periods]                 │
+│   (+ specCeiling,             │  │                                           │
+│    blendTarget inputs)        │  │  ─────── PREMIUM ────────                 │
+└───────────────────────────────┘  │  [table: tanks × periods]                 │
+                                   │                                           │
+                                   │  ▼ Blend Plan Summary (collapsible)       │
+                                   └───────────────────────────────────────────┘
 
 RECEIPTS tab  → T4PasteInput (full screen)
 LIFTINGS tab  → LiftingsInput (full screen)
@@ -336,16 +344,18 @@ GUIDE tab     → GuideTab (full screen)
 
 ### Grid cell layout (TankRow.jsx)
 ```
-┌──────────────────────────┐
-│ [STATUS BADGE]           │  ← 9px mono, clickable (toggles blendActive)
-│ ┌──┐                     │
-│ │██│ ← VerticalTankGauge │  ← 16×48px; cell click opens AllocationPanel
-│ └──┘                     │
-│ 38,200 bbl               │  ← closingInventory, 11px font-mono
-│ RVP 8.90                 │  ← blue (#60a5fa), 10px font-mono
-│ OFFLINE                  │  ← 8px red, only if blendActive
-│ ↑4,250  ↓660             │  ← ↑ receipts, ↓ liftings, 9px, only if non-zero
-└──────────────────────────┘
+┌──────────────────────────────┐
+│ [STATUS BADGE]               │  ← 10px, fontWeight 800, letterSpacing 0.3px
+│ [BLEND] [IDLE]               │  ← 9px toggle buttons (inline, not modal)
+│ ┌──┐                         │
+│ │██│ ← VerticalTankGauge     │  ← 16×56px; cell click opens AllocationPanel
+│ └──┘                         │
+│ 38,200 bbl                   │  ← closingInventory, 12px font-mono fontWeight 600
+│ RVP 8.900                    │  ← #004F71, 11px font-mono fontWeight 700
+│ [EXP-MTV-4C-201]             │  ← batch chip: 10px 700, rgba(0,79,113,.10) bg
+│ OFFLINE                      │  ← 8px coral (#D9655B), only if BLEND
+│ ↑4,250  ↓660                 │  ← 11px font-mono 700; ↑ #00B398, ↓ #5E7A8A, ↗ #C0882E
+└──────────────────────────────┘
 ```
 
 ### VerticalTankGauge (InventoryBar.jsx)
@@ -359,49 +369,59 @@ Fill color priority:
 
 Used in three places:
 - `TankRow` row header: 8×36px, showing opening fill %
-- `TankRow` cells: 16×48px, showing closing fill %
+- `TankRow` cells: 16×56px, showing closing fill %
 - `OpeningInventoryForm`: 6×20px, next to tank label
 
-### Status badge colors
+### Status badge colors (TankRow.jsx `STATUS_BADGE`)
 | Status | Background | Text |
 |--------|-----------|------|
-| BLEND | `#ef4444` | `#ffffff` |
-| RACK | `#166534` | `#dcfce7` |
-| RECEIPT | `#92400e` | `#fef3c7` |
-| IDLE | `#1e293b` | `#64748b` |
+| BLEND | `rgba(217,101,91,.15)` | `#D9655B` |
+| RACK | `rgba(0,179,152,.14)` | `#0a7e62` |
+| RECEIPT | `rgba(0,79,113,.10)` | `#004F71` |
+| IDLE | `rgba(0,79,113,.07)` | `#5E7A8A` |
+| CONFLICT | `rgba(224,162,60,.15)` | `#92660a` |
+| OVERFILL | `rgba(192,136,46,.18)` | `#8a5e12` |
 
-BLEND cells additionally get: `backgroundColor: #1a0a0a`, `borderLeft: 3px solid #ef4444`, inventory text `#fca5a5`.
+Cell background overrides: BLEND → `rgba(217,101,91,.08)` + `borderLeft: 3px solid #D9655B`. CONFLICT → `rgba(224,162,60,.08)` + `3px solid #E0A23C`. OVERFILL → `rgba(124,58,237,.08)` + `3px solid #C0882E`.
+
+### Batch code chips (TankRow.jsx)
+Shown below the RVP line when `entry.receipts.length > 0`.
+`fontSize: 10px`, `fontWeight: 700`, `padding: 2px 6px`, `backgroundColor: rgba(0,79,113,.10)`, `border: 1px solid rgba(0,79,113,.25)`, `color: #004F71`, `borderRadius: 3px`.
 
 ---
 
-## Color Palette
+## Color Palette (GP Light Mode)
+
+All components use a local `C` constant at the top of each file. Standard values:
 
 ```js
-pageBg:    '#0a0c12'   // outer page background
-headerBg:  '#0f1117'   // header + sidebar
-panel:     '#111827'   // grid cells, cards
-border:    '#1e293b'   // default border (0.5px)
-borderDay: '#2a2d3a'   // day-separator border (1px)
-text:      '#f1f5f9'   // primary text
-secondary: '#64748b'   // labels, muted text
-muted:     '#334155'   // very muted text
-amber:     '#f59e0b'   // accent, RECEIPT badge, section headers
-blue:      '#60a5fa'   // RVP values, RACK gauge fill
-red:       '#ef4444'   // BLEND badge, warnings
-green:     '#22c55e'   // ok status (not heavily used in new palette)
+pageBg:   '#FFFFFF'              // outer page / content area background
+headerBg: '#EEF3F6'              // header row 1 + sidebar background
+panel:    '#EEF3F6'              // cards, panels, form backgrounds
+panel2:   '#F5F8FA'              // secondary alternating row (BlendPlanSummary)
+border:   'rgba(0,79,113,.13)'   // default border
+borderEm: 'rgba(0,79,113,.25)'   // emphasis border
+text:     '#063A52'              // primary text
+muted:    '#5E7A8A'              // labels, secondary text
+faint:    '#9DB0BC'              // very muted / chevrons
+amber:    '#00B398'              // teal (GP brand) — active states, receipt ↑ arrow
+blue:     '#004F71'              // navy (GP brand) — section headers, RVP values
+red:      '#D9655B'              // coral — BLEND / warnings
+green:    '#0a7e62'              // RACK status text
 ```
+
+Row alternation in grid tables: even day index → `#FFFFFF`, odd → `#F5F8FA`.
+
+Body background (`index.css`): radial-gradient teal + green tints over `#EEF3F6` base. Montserrat (wght 400;500;600;700;800) imported from Google Fonts.
 
 ---
 
 ## Liftings Curve
 
-`buildLiftingsGridWithBase(terminalConfig, startDate, planDays, dailyBase)` (used in `useBlendPlanner` with `DEFAULT_DAILY_BASE`) distributes daily demand evenly. `buildLiftingsGrid()` is a convenience wrapper that calls it with the hardcoded `DAILY_BASE`.
-across all tanks of each product for the plan window. Initial distribution is a placeholder.
+`buildLiftingsGridWithBase(terminalConfig, startDate, planDays, dailyBase)` (used in `useBlendPlanner` with `DEFAULT_DAILY_BASE`) distributes daily demand evenly across all tanks of each product for the plan window. Initial distribution is a placeholder.
 Fine-grained control is via `AllocationPanel` → `liftingAllocations`.
 
-`LiftingsInput` shows **product-level totals** (sum across tanks for display). Editing a cell
-redistributes the new total evenly across that product's tanks. AllocationPanel overrides
-take precedence in `inventoryCalc`.
+`LiftingsInput` shows **product-level totals** (sum across tanks for display). Editing a cell redistributes the new total evenly across that product's tanks. AllocationPanel overrides take precedence in `inventoryCalc`.
 
 ---
 
@@ -428,9 +448,7 @@ The "Confirm & Apply" button is disabled until all RVPs are entered.
 
 ## OpeningInventoryForm
 
-Displays pumpable in **thousands** (`38500` → shows `38.5`). Stores full bbls internally.
-Conversion: `toK(v) = (v/1000).toFixed(1)` / `fromK(s) = round(parseFloat(s) * 1000)`.
-Grouped under REGULAR / PREMIUM sub-headers (9px amber). No product badge column.
+Displays and stores pumpable in **full bbls** (no thousands conversion). Grouped under REGULAR / PREMIUM sub-headers. `specCeiling` and `blendTarget` inputs sit at the bottom under "Blend Spec". `blendTarget` auto-sets to `specCeiling − 0.25` via `useEffect`.
 
 ---
 
@@ -439,7 +457,7 @@ Grouped under REGULAR / PREMIUM sub-headers (9px amber). No product badge column
 `src/data/googleSheets.js` — browser-side Google Sheets append via service account JWT (no backend).
 
 - `SHEET_ID` = `'1siJmeWuFgVCOxK2acali-_wzY8QSJm20OLxJbP3-dfc'`
-- Credentials are pasted by the operator at runtime and stored in `sessionStorage` only (key: `blend_planner_gcreds`). Never bundled or committed.
+- Credentials are pasted by the operator at runtime and stored in `sessionStorage` only (key: `blend_planner_gcreds`). **Never bundled or committed.**
 - JWT signing uses `SubtleCrypto.sign` (RSASSA-PKCS1-v1_5 / SHA-256) — no npm packages.
 - `savePlanToSheet()` appends to two tabs: **Blend History** (one row per blend) and **Weekly Snapshots** (one row for the week).
 - `SavePlanButton` in `BlendPlanSummary` exposes a 2-step modal: paste creds → add notes → confirm save.
@@ -483,9 +501,11 @@ TODO (IT): replace runtime credential paste with a backend auth endpoint.
 - **Never** change `fort-worth.json` tank `safeFill` or `heel` values without quoting a source — these came from Kelly's spec.
 - The `bottoms` field was intentionally removed from tank config. Do not re-add it.
 - `status` on TimePeriod is **derived only** — never add a way to manually set it.
-- `openingInventory` stores full bbls internally. Only `OpeningInventoryForm` converts to/from thousands for display. Do not change this in any other component.
+- `openingInventory` stores full bbls internally. Do not convert or display in thousands in any component other than any future UI that explicitly needs it.
 - All dates use UTC (`T00:00:00Z` suffix) to avoid timezone drift across the planning window.
 - `rackLoadings` is negative for outbound volume. Liftings are always negative numbers.
 - The `liftings` array (from `buildLiftingsGrid`) provides the baseline volume per tank/period. `rackTankAssignments` controls which tank(s) rack and handles the primary/handoff split. Do not merge them into one structure.
 - `recharts` is listed in `package.json` but not yet used. Do not remove it without checking with Michael — it may be planned for a future chart view.
 - `font-mono` Tailwind class is used for all numeric displays. Do not replace with inline `fontFamily: 'monospace'` except where Tailwind classes are unavailable (SVG, etc).
+- All visual/CSS changes must be **visual only — zero logic changes**. Do not touch calculation, state, or data-flow code during styling work.
+- Credentials entered at runtime via paste — never bundled or committed. Google Sheets service account credentials stored in `sessionStorage` only (key: `blend_planner_gcreds`).

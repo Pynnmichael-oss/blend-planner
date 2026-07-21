@@ -121,6 +121,16 @@ export default function useBlendPlanner() {
     }));
   }
 
+  // Applies a FuelsManager snapshot's pumpable bbls per tank; tanks not
+  // present in the file are left untouched (still manually editable).
+  function handleFuelsManagerConfirm(inventoryByTank) {
+    setOpeningInventory(prev => prev.map(t =>
+      t.tankId in inventoryByTank
+        ? { ...t, pumpable: Math.round(inventoryByTank[t.tankId]) }
+        : t
+    ));
+  }
+
   return {
     terminalId, terminalConfig, startDate,
     openingInventory, receipts, manualInputs,
@@ -131,6 +141,7 @@ export default function useBlendPlanner() {
     toggleBlend, toggleIdle, toggleRack,
     transfers, setTransfer,
     setReceiptAllocation, setRackTank,
+    handleFuelsManagerConfirm,
     parsedReceipts, setParsedReceipts,
     rvpValues, setRvpValues,
     rvpConfirmed, setRvpConfirmed,

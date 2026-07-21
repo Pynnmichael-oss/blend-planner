@@ -82,6 +82,7 @@ export default function AppShell({
   startSlot, setStartSlot,
   specCeiling, setSpecCeiling,
   blendTarget, setBlendTarget,
+  handleFuelsManagerConfirm,
 }) {
   const [activeTab,  setActiveTab]  = useState('PLAN');
   const [open,       setOpen]       = useState({ inventory: true });
@@ -247,6 +248,7 @@ export default function AppShell({
                   setSpecCeiling={setSpecCeiling}
                   blendTarget={blendTarget}
                   setBlendTarget={setBlendTarget}
+                  onFuelsManagerConfirm={handleFuelsManagerConfirm}
                 />
               </SidebarSection>
 
