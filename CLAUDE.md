@@ -17,6 +17,7 @@ Built by Michael Pynn. Domain expert: Kelly (terminal operations).
 - Deployed to GitHub Pages at `/blend-planner/` (`vite.config.js` `base` is set)
 - `npm run dev` · `npm run build` · `npm run preview` · `npm run lint` · `npm run deploy` (gh-pages)
 - Tailwind v4 is wired via `@import "tailwindcss"` in `index.css` through PostCSS — **`@tailwindcss/vite` is in `package.json` but is NOT added to `vite.config.js`**; do not add it without testing
+- `xlsx` (SheetJS) is used client-side for parsing FuelsManager `.xlsx` tank gauge exports — see [FuelsManager Snapshot Import](#fuelsmanager-snapshot-import)
 
 ---
 
@@ -54,6 +55,7 @@ src/
     blendPlanSummary.js            — detectBlends(grid, terminalConfig) → BlendRow[]
     blendLogic.js                  — evaluateBlendSignal() — STUB, pending Kelly spec
     googleSheets.js                — savePlanToSheet(), JWT signing via SubtleCrypto
+    parseFuelsManager.js           — parseFuelsManagerWorkbook(), getLatestValidByTank() — xlsx tank gauge import
 
   hooks/
     useBlendPlanner.js             — single source of truth for all app state
@@ -74,7 +76,8 @@ src/
       ProductSection.jsx           — stub
       RVPDisplay.jsx               — stub
     datainput/
-      OpeningInventoryForm.jsx     — tank inventory form + specCeiling/blendTarget inputs
+      OpeningInventoryForm.jsx     — tank inventory form + specCeiling/blendTarget inputs + FuelsManager upload subsection
+      FuelsManagerUpload.jsx       — xlsx file upload → preview → confirm applies to opening inventory
       T4PasteInput.jsx             — textarea paste → parseT4 → RVP entry → confirm
       LiftingsInput.jsx            — product × period editable liftings table
       TMSLiftingsInput.jsx         — stub
@@ -291,6 +294,7 @@ All state lives in `useBlendPlanner` (src/hooks/useBlendPlanner.js).
 - `setReceiptAllocation(batchCode, date, timeSlot, tankId, volume)`
 - `setRackTank(product, date, timeSlot, primary, handoff?, handoffVolume?)` — sets primary/handoff rack tanks for a period
 - `setParsedReceipts`, `setRvpValues`, `setRvpConfirmed`
+- `handleFuelsManagerConfirm(inventoryByTank)` — applies a FuelsManager snapshot's `{ tankId: available }` map to `openingInventory`; tanks not present in the file are left untouched
 
 ### Rack tank assignment model
 `rackTankAssignments` stores `{ primary: tankId, handoff: tankId|null, handoffVolume: number }` per `product-date-slot`.
@@ -448,7 +452,21 @@ The "Confirm & Apply" button is disabled until all RVPs are entered.
 
 ## OpeningInventoryForm
 
-Displays and stores pumpable in **full bbls** (no thousands conversion). Grouped under REGULAR / PREMIUM sub-headers. `specCeiling` and `blendTarget` inputs sit at the bottom under "Blend Spec". `blendTarget` auto-sets to `specCeiling − 0.25` via `useEffect`.
+Displays and stores pumpable in **full bbls** (no thousands conversion). Grouped under REGULAR / PREMIUM sub-headers. `specCeiling` and `blendTarget` inputs sit at the bottom under "Blend Spec". `blendTarget` auto-sets to `specCeiling − 0.25` via `useEffect`. A collapsible "Load FuelsManager Snapshot" subsection sits above the manual tank rows, rendering `FuelsManagerUpload`.
+
+---
+
+## FuelsManager Snapshot Import
+
+Lets an operator load a FuelsManager tank gauge export (`.xlsx`) and apply the latest valid reading per tank straight to opening inventory, instead of typing pumpable bbls by hand.
+
+- Uses the `xlsx` npm package (SheetJS) — `XLSX.read` / `XLSX.utils.sheet_to_json`.
+- `src/data/parseFuelsManager.js` (pure, no React, does not touch `parseT4.js`):
+  - `TANK_ID_MAP` — FuelsManager numeric tank IDs → internal tank IDs (`"23155" → "TK55"`, `"23156" → "TK56"`, `"27403" → "TK03"`, `"27404" → "TK04"`, `"27405" → "TK05"`). Rows for unmapped tanks (ULSD, ethanol, etc.) are silently skipped.
+  - `parseFuelsManagerWorkbook(arrayBuffer)` — reads the workbook, keeps only `PulledAt`, `Tank`, `Product`, `Available`, `TOV`, `WorkingCap` columns (ignores `Temp`/`Space`/`WorkingHeight`/`Flow_BBH`/`TankStatus`/`TankCommand`/`Transferstatus`).
+  - `getLatestValidByTank(rows)` — per tank, sorts rows by `PulledAt` descending and takes the newest row where `Available > 0 && Available <= WorkingCap * 1.2`; invalid rows are skipped and counted per-tank as `skippedBadRows`. `Available` maps 1:1 to pumpable bbls — no heel math needed, it's already net of heel.
+- `src/components/datainput/FuelsManagerUpload.jsx` — file picker → parse → **preview table** (Tank | Available | Pulled At, with a warning badge when `skippedBadRows > 0`) → explicit **"Apply to Opening Inventory"** or **"Discard"** buttons. No auto-apply; confirmation is always required.
+- `useBlendPlanner.js`'s `handleFuelsManagerConfirm(inventoryByTank)` sets `pumpable` only for tanks present in the uploaded file; any tank not in the file is left untouched and remains manually editable in `OpeningInventoryForm`.
 
 ---
 
