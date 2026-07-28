@@ -19,9 +19,9 @@ const SLOT_CONFIG = [
   { curveKey: '18:00-23:59', calcKey: '18-23', dist: 0.20 },
 ];
 
-const DAILY_BASE = { regular: -13200, premium: -3800 };
+const DAILY_BASE = { regular: -13900, premium: -2000 };
 
-export const DEFAULT_DAILY_BASE = { regular: 13200, premium: 3800 };
+export const DEFAULT_DAILY_BASE = { regular: 13900, premium: 2000 };
 
 // { regular: { "Monday|00:00-05:59": -1980, ... }, premium: { ... } }
 export const defaultLiftingsCurve = (() => {

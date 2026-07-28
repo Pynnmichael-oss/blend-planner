@@ -394,9 +394,7 @@ export function buildPlanGrid({
           else {
             const onRack    = isRackTank && totalLifting !== 0;
             const onReceipt = cappedReceipts > 0;
-            if      (onRack && onReceipt) status = "CONFLICT";
-            // Rack and receipt on same tank is now a conflict,
-            // should only occur when no other tank is available
+            if      (onRack && onReceipt) status = "RACK+RCV";
             else if (onRack)              status = "RACK";
             else if (onReceipt)           status = "RECEIPT";
             else                          status = "IDLE";

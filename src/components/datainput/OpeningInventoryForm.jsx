@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import VerticalTankGauge from '../blendplanner/InventoryBar';
 import FuelsManagerUpload from './FuelsManagerUpload';
 
@@ -24,10 +24,6 @@ const inputBase = {
 
 export default function OpeningInventoryForm({ openingInventory, terminalConfig, setOpeningInventory, specCeiling, setSpecCeiling, blendTarget, setBlendTarget, onFuelsManagerConfirm }) {
   const [fmOpen, setFmOpen] = useState(false);
-
-  useEffect(() => {
-    setBlendTarget(+(specCeiling - 0.25).toFixed(2));
-  }, [specCeiling]);
 
   function handleChange(tankId, field, raw) {
     const value = field === 'pumpable'
@@ -73,7 +69,7 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
       </thead>
       <tbody>
         {Object.entries(terminalConfig.products).map(([pk, product]) => (
-          <>
+          <React.Fragment key={pk}>
             {/* Product sub-header */}
             <tr key={`${pk}-header`}>
               <td
@@ -122,7 +118,7 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
                 </tr>
               );
             })}
-          </>
+          </React.Fragment>
         ))}
       </tbody>
     </table>
@@ -138,7 +134,11 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
           <input
             type="number" step="0.05" min="8.0" max="15.0"
             value={specCeiling}
-            onChange={e => setSpecCeiling(parseFloat(e.target.value) || 9.0)}
+            onChange={e => {
+              const val = parseFloat(e.target.value) || 9.0;
+              setSpecCeiling(val);
+              setBlendTarget(+(val - 0.25).toFixed(2));
+            }}
             className="font-mono"
             style={{ ...specInputBase, color: '#D9655B' }}
           />

@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { parseT4 } from '../../data/parseT4';
 
 const GRADE_RVP_DEFAULTS = {
-  '4C': 7.0, '4D': 7.0,
-  '3C': 7.0, '3D': 7.0,
+  '4C': 8.6, '4D': 8.6,
+  '3C': 8.6, '3D': 8.6,
 };
 const GRADES = ['4C', '4D', '3C', '3D'];
 
@@ -282,7 +282,7 @@ export default function T4PasteInput({
                   const accentColor = isConfirmed ? '#004F71' : '#00B398';
                   return (
                     <tr
-                      key={r.batchCode}
+                      key={r.receiptId}
                       style={{ backgroundColor: '#EEF3F6', borderLeft: `3px solid ${accentColor}` }}
                     >
                       <td style={{ ...tdSt, color: C.muted }}>

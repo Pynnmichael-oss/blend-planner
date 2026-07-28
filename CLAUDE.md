@@ -65,12 +65,13 @@ src/
     layout/
       AppShell.jsx                 — auto-height two-row sticky header + 300px sidebar + scrollable main
       GuideTab.jsx                 — operator reference guide (full-screen, read-only)
+      ReceiptsTab.jsx              — NOT wired into AppShell; unused dark-themed alternate combining parseT4 + LiftingsInput. Don't build on this without confirming with Michael first.
     blendplanner/
       BlendPlannerGrid.jsx         — groups grid flat array → per-product tables
       TankRow.jsx                  — renders one <tr>: row header + all period cells
       InventoryBar.jsx             — VerticalTankGauge component (default export)
       AllocationPanel.jsx          — modal overlay for per-tank receipt/lifting allocation
-      BlendPlanSummary.jsx         — summary table + BlendCalculator cards + SavePlanButton
+      BlendPlanSummary.jsx         — summary table + BlendCalculator cards, renders SavePlanButton
       BlendToggle.jsx              — stub
       DayColumn.jsx                — stub
       ProductSection.jsx           — stub
@@ -78,11 +79,12 @@ src/
     datainput/
       OpeningInventoryForm.jsx     — tank inventory form + specCeiling/blendTarget inputs + FuelsManager upload subsection
       FuelsManagerUpload.jsx       — xlsx file upload → preview → confirm applies to opening inventory
-      T4PasteInput.jsx             — textarea paste → parseT4 → RVP entry → confirm
+      T4PasteInput.jsx             — textarea paste → parseT4 → RVP entry → confirm (wired into RECEIPTS tab)
       LiftingsInput.jsx            — product × period editable liftings table
       TMSLiftingsInput.jsx         — stub
     shared/
       StatusBadge.jsx              — stub
+      SavePlanButton.jsx           — Google Sheets save modal (2-step: paste creds → notes → confirm)
 
   mock/
     fort-worth-inventory.js        — fortWorthOpeningInventory (as of 2026-04-16)
@@ -495,6 +497,7 @@ TODO (IT): replace runtime credential paste with a backend auth endpoint.
 - `src/components/blendplanner/RVPDisplay.jsx` — stub
 - `src/components/datainput/TMSLiftingsInput.jsx` — stub
 - `src/components/shared/StatusBadge.jsx` — stub
+- `src/components/layout/ReceiptsTab.jsx` — unused, not routed from `AppShell`; `activeTab === 'RECEIPTS'` renders `T4PasteInput`, not this file
 
 ---
 

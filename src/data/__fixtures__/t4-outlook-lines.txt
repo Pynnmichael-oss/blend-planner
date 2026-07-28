@@ -1,0 +1,931 @@
+Start Date
+Line
+Ver
+Evt Loc
+Location Description
+Batch Code
+Sup
+Con
+Tnk
+Grt
+Grt2
+Sch
+UOM
+Rate
+Action
+Date Created
+Created By
+Remark
+Coverage
+7/27/2026 5:30
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-401-PTA
+ 
+MTV
+GBT
+ 
+Add
+10,749.99
+Bbls
+1,459
+BDY
+7/27/2026 14:56
+exp_b2b
+0 SEQ
+From 7/27/2026 To 7/27/2026
+7/30/2026 10:26
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-EXN-4D-401-PAS
+ 
+EXN
+GBT
+ 
+Add
+9,249.99
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+6 SEQ
+From 7/27/2026 To 7/27/2026
+7/31/2026 12:55
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+5,000
+Bbls
+4,000
+BDY
+7/27/2026 14:56
+exp_b2b
+27 SEQ
+From 7/27/2026 To 7/27/2026
+7/31/2026 14:10
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-3D-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+3,000
+Bbls
+4,000
+BDY
+7/27/2026 14:56
+exp_b2b
+28 SEQ
+From 7/27/2026 To 7/27/2026
+7/31/2026 14:55
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+5,000
+Bbls
+4,000
+BDY
+7/27/2026 14:56
+exp_b2b
+29 SEQ
+From 7/27/2026 To 7/27/2026
+8/1/2026 0:42
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-412-PTA
+ 
+MTV
+GBT
+ 
+Add
+19,999.99
+Bbls
+3,782.61
+BDY
+7/27/2026 14:56
+exp_b2b
+33 SEQ
+From 7/27/2026 To 7/27/2026
+8/1/2026 7:30
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+10,749.99
+Bbls
+1,458.66
+BDY
+7/27/2026 14:56
+exp_b2b
+34 SEQ
+From 7/27/2026 To 7/27/2026
+8/3/2026 6:29
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+9,249.99
+Bbls
+1,447.45
+BDY
+7/27/2026 14:56
+exp_b2b
+38 SEQ
+From 7/27/2026 To 7/27/2026
+8/4/2026 23:44
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-3D-421-PTA
+ 
+MTV
+GBT
+ 
+Add
+2,999.99
+Bbls
+3,891.72
+BDY
+7/27/2026 14:56
+exp_b2b
+59 SEQ
+From 7/27/2026 To 7/27/2026
+8/5/2026 4:53
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-421-PTA
+ 
+MTV
+GBT
+ 
+Add
+4,999.99
+Bbls
+3,769.21
+BDY
+7/27/2026 14:56
+exp_b2b
+62 SEQ
+From 7/27/2026 To 7/27/2026
+8/5/2026 6:13
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-75-421-PTA
+ 
+MTV
+GBT
+ 
+Add
+9,799.99
+Bbls
+3,731.44
+BDY
+7/27/2026 14:56
+exp_b2b
+63 SEQ
+From 7/27/2026 To 7/27/2026
+8/5/2026 8:50
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-EXN-4D-421-PAS
+ 
+EXN
+GBT
+ 
+Add
+7,499.99
+Bbls
+3,709.07
+BDY
+7/27/2026 14:56
+exp_b2b
+64 SEQ
+From 7/27/2026 To 7/27/2026
+8/5/2026 12:30
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-421-PTA
+ 
+MTV
+GBT
+ 
+Add
+10,749.99
+Bbls
+1,458.02
+BDY
+7/27/2026 14:56
+exp_b2b
+65 SEQ
+From 7/27/2026 To 7/27/2026
+8/8/2026 3:26
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-421-PTA
+ 
+MTV
+GBT
+ 
+Add
+9,249.99
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+69 SEQ
+From 7/27/2026 To 7/27/2026
+8/10/2026 1:07
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-3D-431-PTA
+ 
+MTV
+GBT
+ 
+Add
+2,849.99
+Bbls
+3,000
+BDY
+7/27/2026 14:56
+exp_b2b
+88 SEQ
+From 7/27/2026 To 7/27/2026
+8/10/2026 2:04
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-431-PTA
+ 
+MTV
+GBT
+ 
+Add
+14,249.99
+Bbls
+2,969.72
+BDY
+7/27/2026 14:56
+exp_b2b
+89 SEQ
+From 7/27/2026 To 7/27/2026
+8/10/2026 6:52
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-EXN-4D-431-PAS
+ 
+EXN
+GBT
+ 
+Add
+9,999.99
+Bbls
+2,874.07
+BDY
+7/27/2026 14:56
+exp_b2b
+90 SEQ
+From 7/27/2026 To 7/27/2026
+8/10/2026 16:30
+3
+164
+FM1
+FWM Connection (FM1)
+EXP-MTV-4D-431-PTA
+ 
+MTV
+GBT
+ 
+Add
+10,749.99
+Bbls
+1,460.20
+BDY
+7/27/2026 14:56
+exp_b2b
+92 SEQ
+From 7/27/2026 To 7/27/2026
+7/27/2026 12:52
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-402-PTA
+ 
+MTV
+GBT
+ 
+Add
+3,924.99
+Bbls
+1,360
+BDY
+7/27/2026 14:56
+exp_b2b
+2 SEQ
+From 7/27/2026 To 7/27/2026
+7/27/2026 15:45
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-402-PTA
+ 
+MTV
+GBT
+ 
+Add
+44,074.99
+Bbls
+1,393.15
+BDY
+7/27/2026 14:56
+exp_b2b
+3 SEQ
+From 7/27/2026 To 7/27/2026
+7/28/2026 23:23
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-402-PTA
+ 
+MTV
+GBT
+ 
+Add
+8,574.99
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+4 SEQ
+From 7/27/2026 To 7/27/2026
+7/29/2026 15:38
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-402-PTA
+ 
+MTV
+GBT
+ 
+Add
+9,249.99
+Bbls
+3,879.31
+BDY
+7/27/2026 14:56
+exp_b2b
+5 SEQ
+From 7/27/2026 To 7/27/2026
+7/30/2026 9:30
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-402-PTA
+ 
+MTV
+GBT
+ 
+Add
+1,500
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+5 SEQ
+From 7/27/2026 To 7/27/2026
+7/30/2026 16:13
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-402-PTA
+ 
+MTV
+GBT
+ 
+Add
+3,925
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+7 SEQ
+From 7/27/2026 To 7/27/2026
+7/30/2026 18:40
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-3D-402-PTA
+ 
+MTV
+GBT
+ 
+Add
+4,749.99
+Bbls
+1,589.83
+BDY
+7/27/2026 14:56
+exp_b2b
+8 SEQ
+From 7/27/2026 To 7/27/2026
+7/30/2026 21:39
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-402-PTA
+ 
+MTV
+GBT
+ 
+Add
+999.99
+Bbls
+1,546.08
+BDY
+7/27/2026 14:56
+exp_b2b
+9 SEQ
+From 7/27/2026 To 7/27/2026
+7/31/2026 10:14
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-402-PTA
+ 
+MTV
+GBT
+ 
+Add
+10,749.99
+Bbls
+4,000
+BDY
+7/27/2026 14:56
+exp_b2b
+9 SEQ
+From 7/27/2026 To 7/27/2026
+8/1/2026 14:52
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+3,924.99
+Bbls
+1,360
+BDY
+7/27/2026 14:56
+exp_b2b
+35 SEQ
+From 7/27/2026 To 7/27/2026
+8/1/2026 17:45
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+29,124.99
+Bbls
+1,360
+BDY
+7/27/2026 14:56
+exp_b2b
+36 SEQ
+From 7/27/2026 To 7/27/2026
+8/3/2026 0:08
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+9,249.99
+Bbls
+3,793.12
+BDY
+7/27/2026 14:56
+exp_b2b
+37 SEQ
+From 7/27/2026 To 7/27/2026
+8/3/2026 5:30
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+1,499.99
+Bbls
+1,511.27
+BDY
+7/27/2026 14:56
+exp_b2b
+37 SEQ
+From 7/27/2026 To 7/27/2026
+8/3/2026 12:52
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+3,924.99
+Bbls
+1,375.28
+BDY
+7/27/2026 14:56
+exp_b2b
+39 SEQ
+From 7/27/2026 To 7/27/2026
+8/3/2026 15:44
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-411-PTA
+ 
+MTV
+GBT
+ 
+Add
+11,074.99
+Bbls
+1,495.03
+BDY
+7/27/2026 14:56
+exp_b2b
+40 SEQ
+From 7/27/2026 To 7/27/2026
+8/3/2026 23:08
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-412-PTA
+ 
+MTV
+GBT
+ 
+Add
+3,250
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+41 SEQ
+From 7/27/2026 To 7/27/2026
+8/4/2026 1:10
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-3D-412-PTA
+ 
+MTV
+GBT
+ 
+Add
+4,749.99
+Bbls
+1,594.21
+BDY
+7/27/2026 14:56
+exp_b2b
+42 SEQ
+From 7/27/2026 To 7/27/2026
+8/4/2026 4:09
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-412-PTA
+ 
+MTV
+GBT
+ 
+Add
+999.99
+Bbls
+1,548.06
+BDY
+7/27/2026 14:56
+exp_b2b
+43 SEQ
+From 7/27/2026 To 7/27/2026
+8/4/2026 20:58
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-412-PTA
+ 
+MTV
+GBT
+ 
+Add
+10,749.99
+Bbls
+3,891.72
+BDY
+7/27/2026 14:56
+exp_b2b
+43 SEQ
+From 7/27/2026 To 7/27/2026
+8/5/2026 19:52
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+3,924.99
+Bbls
+1,360
+BDY
+7/27/2026 14:56
+exp_b2b
+66 SEQ
+From 7/27/2026 To 7/27/2026
+8/5/2026 22:45
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+49,974.99
+Bbls
+1,389.37
+BDY
+7/27/2026 14:56
+exp_b2b
+67 SEQ
+From 7/27/2026 To 7/27/2026
+8/7/2026 10:43
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+999.99
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+68 SEQ
+From 7/27/2026 To 7/27/2026
+8/7/2026 21:29
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+9,249.99
+Bbls
+2,976.83
+BDY
+7/27/2026 14:56
+exp_b2b
+68 SEQ
+From 7/27/2026 To 7/27/2026
+8/8/2026 2:30
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+1,500
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+68 SEQ
+From 7/27/2026 To 7/27/2026
+8/8/2026 9:13
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+3,924.99
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+70 SEQ
+From 7/27/2026 To 7/27/2026
+8/8/2026 11:40
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+7,574.99
+Bbls
+1,600
+BDY
+7/27/2026 14:56
+exp_b2b
+71 SEQ
+From 7/27/2026 To 7/27/2026
+8/8/2026 16:24
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-3D-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+4,749.99
+Bbls
+1,594.29
+BDY
+7/27/2026 14:56
+exp_b2b
+72 SEQ
+From 7/27/2026 To 7/27/2026
+8/8/2026 19:23
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+999.99
+Bbls
+1,552.16
+BDY
+7/27/2026 14:56
+exp_b2b
+73 SEQ
+From 7/27/2026 To 7/27/2026
+8/9/2026 21:32
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-4D-422-PTA
+ 
+MTV
+GBT
+ 
+Add
+10,749.99
+Bbls
+3,000
+BDY
+7/27/2026 14:56
+exp_b2b
+73 SEQ
+From 7/27/2026 To 7/27/2026
+8/10/2026 23:51
+3
+164
+FM6
+FWM Connection (FM6)
+EXP-MTV-75-431-PTA
+ 
+MTV
+GBT
+ 
+Add
+2,038.81
+Bbls
+1,360
+BDY
+7/27/2026 14:56
+exp_b2b
+93 SEQ
+From 7/27/2026
