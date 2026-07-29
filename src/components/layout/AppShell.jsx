@@ -5,6 +5,7 @@ import T4PasteInput from '../datainput/T4PasteInput';
 import BlendPlannerGrid from '../blendplanner/BlendPlannerGrid';
 import BlendPlanSummary from '../blendplanner/BlendPlanSummary';
 import GuideTab from './GuideTab';
+import { generatePlanPDF } from '../../data/generatePlanPDF';
 
 const TERMINALS   = [{ id: 'fort-worth', name: 'Fort Worth' }, { id: 'tampa', name: 'Tampa' }];
 const DAY_OPTIONS = [3, 5, 8];
@@ -88,6 +89,11 @@ export default function AppShell({
   const [open,       setOpen]       = useState({ inventory: true });
   const [summaryOpen, setSummaryOpen] = useState(false);
   const toggle = key => setOpen(prev => ({ ...prev, [key]: !prev[key] }));
+
+  function handleSavePlanPDF() {
+    const doc = generatePlanPDF(grid, terminalConfig, startDate, planDays);
+    doc.save(`Weekly-Plan-${startDate}.pdf`);
+  }
 
   return (
     <div style={{
@@ -258,6 +264,19 @@ export default function AppShell({
             {/* Main grid content */}
             <div style={{ flex: 1, overflowY: 'auto', backgroundColor: C.pageBg }}>
               <div style={{ padding: '14px 18px' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                  <button
+                    onClick={handleSavePlanPDF}
+                    style={{
+                      padding: '6px 16px', fontSize: '12px', fontWeight: 'bold',
+                      backgroundColor: C.amber, color: '#000',
+                      border: 'none', borderRadius: '4px', cursor: 'pointer',
+                      fontFamily: "'Montserrat',sans-serif",
+                    }}
+                  >
+                    Save Plan PDF
+                  </button>
+                </div>
                 <BlendPlannerGrid
                   grid={grid}
                   terminalConfig={terminalConfig}
