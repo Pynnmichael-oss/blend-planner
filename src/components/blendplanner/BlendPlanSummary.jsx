@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 // specCeiling and blendTarget are lifted to useBlendPlanner — received as props
 import { detectBlends } from '../../data/blendPlanSummary';
+import { generateBlendPDF } from '../../data/generateBlendPDF';
 import SavePlanButton from '../shared/SavePlanButton';
 
 const C = {
@@ -221,8 +222,25 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
   );
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export default function BlendPlanSummary({ grid, terminalConfig, openingInventory = [], liftings = [], startDate, specCeiling, blendTarget }) {
   const blends = detectBlends(grid, terminalConfig);
+  const [pdfStatus, setPdfStatus] = useState(null); // null | 'saving' | 'done'
+
+  async function handleSavePDFs() {
+    if (!blends.length || pdfStatus === 'saving') return;
+    setPdfStatus('saving');
+    for (const blend of blends) {
+      const doc = generateBlendPDF(blend);
+      doc.save(`Blend-${blend.blendNumber}-${blend.tankId}-${blend.startDate}.pdf`);
+      await sleep(300);
+    }
+    setPdfStatus('done');
+    setTimeout(() => setPdfStatus(null), 3000);
+  }
 
   const titleDateRange = blends.length
     ? (() => {
@@ -306,6 +324,27 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '12px' }}>
+          <button
+            onClick={handleSavePDFs}
+            disabled={pdfStatus === 'saving'}
+            style={{
+              padding: '6px 16px', fontSize: '12px', fontWeight: 'bold',
+              backgroundColor: C.amber, color: '#000',
+              border: 'none', borderRadius: '4px',
+              cursor: pdfStatus === 'saving' ? 'not-allowed' : 'pointer',
+              opacity: pdfStatus === 'saving' ? 0.5 : 1,
+            }}
+          >
+            {pdfStatus === 'saving' ? 'Saving PDFs…' : 'Save Blend PDFs'}
+          </button>
+          {pdfStatus === 'done' && (
+            <span style={{ fontSize: '11px', color: C.green, fontWeight: 'bold' }}>
+              ✓ Saved {blends.length} PDF{blends.length !== 1 ? 's' : ''}
+            </span>
+          )}
         </div>
       </div>
 
