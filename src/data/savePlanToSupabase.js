@@ -17,6 +17,31 @@
 //   truckStart / truckFinish -> truck_start / truck_finish
 import { supabase } from './supabaseClient';
 
+// The Blend Case Manager's valve-alignment checklist (and potentially
+// other execution-side features) is keyed by the terminal's physical tank
+// asset tag, not by Blend-Planner's short tank id. Blend-Planner's own
+// config (fort-worth.json) has no concept of this number, so we maintain
+// the mapping here at the point where a plan crosses into the shared
+// blend_plans table. TK03 has no known asset tag / valve alignment
+// configured on the Case Manager side yet -- left unmapped (null) rather
+// than guessed, so it correctly shows "not configured" instead of a wrong
+// number silently pointing at someone else's valves.
+const TANK_ASSET_TAG = {
+  TK55: '23155',
+  TK56: '23156',
+  TK04: '27404',
+  TK05: '27405',
+  // TK03: no asset tag known yet -- confirm with terminal ops before adding
+};
+
+function tankAssetTagFor(blend) {
+  const tag = TANK_ASSET_TAG[blend.tankId];
+  if (!tag) {
+    console.warn(`[savePlanToSupabase] no physical asset tag mapped for tank id "${blend.tankId}" -- tank_no will be left blank, and execution-side features that key off it (e.g. the valve alignment checklist) will show as not configured.`);
+  }
+  return tag ?? null;
+}
+
 function isoWeek(dateStr) {
   const d = new Date(`${dateStr}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -96,7 +121,7 @@ export async function savePlanToSupabase({ terminalConfig, blends, startDate, bl
     label: `Blend ${b.blendNumber}`,
     grade: (b.product || '').toUpperCase() || 'REGULAR',
     tank: b.tankLabel || b.tankId,
-    tank_no: null, // Blend-Planner has no physical asset tag -- see migration 10
+    tank_no: tankAssetTagFor(b),
     window_start: `${b.startDate} ${b.startTime}`,
     window_end: `${b.endDate} ${b.endTime}`,
     est_pumpable_bbl: b.estPumpable ?? 0,
