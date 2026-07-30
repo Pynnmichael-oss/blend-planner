@@ -154,8 +154,11 @@ export default function AppShell({
           {/* Spacer */}
           <div style={{ flex: 1 }} />
 
-          {/* Dashboard link */}
-          <a href="/Terminal-Dashboard/" style={{ fontSize: '13px', fontWeight: 700, color: '#5E7A8A', textDecoration: 'none', letterSpacing: '.3px' }}>
+          {/* Dashboard link -- terminal-blending-dashboard is deployed at
+              this GitHub Pages URL; this used to point to the nonexistent
+              /Terminal-Dashboard/ path (wrong case, wrong repo name
+              entirely -- the real repo is terminal-blending-dashboard). */}
+          <a href="https://pynnmichael-oss.github.io/terminal-blending-dashboard/index.html" style={{ fontSize: '13px', fontWeight: 700, color: '#5E7A8A', textDecoration: 'none', letterSpacing: '.3px' }}>
             ← Dashboard
           </a>
         </div>
