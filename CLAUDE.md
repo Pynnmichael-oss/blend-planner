@@ -54,7 +54,8 @@ src/
     parseT4.js                     — parseT4() — tab-separated T4 paste parser
     blendPlanSummary.js            — detectBlends(grid, terminalConfig) → BlendRow[]
     blendLogic.js                  — evaluateBlendSignal() — STUB, pending Kelly spec
-    googleSheets.js                — savePlanToSheet(), JWT signing via SubtleCrypto
+    supabaseClient.js               — Supabase client (anon key from Vite env vars, no backend)
+    savePlanToSupabase.js           — savePlanToSupabase() — inserts BlendRows into shared blend_plans table
     parseFuelsManager.js           — parseFuelsManagerWorkbook(), getLatestValidByTank() — xlsx tank gauge import
 
   hooks/
@@ -84,7 +85,7 @@ src/
       TMSLiftingsInput.jsx         — stub
     shared/
       StatusBadge.jsx              — stub
-      SavePlanButton.jsx           — Google Sheets save modal (2-step: paste creds → notes → confirm)
+      SavePlanButton.jsx           — Save-to-Supabase modal (notes → confirm), renders in BlendPlanSummary
 
   mock/
     fort-worth-inventory.js        — fortWorthOpeningInventory (as of 2026-04-16)
@@ -472,17 +473,34 @@ Lets an operator load a FuelsManager tank gauge export (`.xlsx`) and apply the l
 
 ---
 
-## Google Sheets Integration
+## Supabase Integration (Blend Case Manager handoff)
 
-`src/data/googleSheets.js` — browser-side Google Sheets append via service account JWT (no backend).
+`src/data/supabaseClient.js` — browser-only Supabase client (anon/publishable key, from `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` in `.env.local`, see `.env.example`). No backend, no service-role key anywhere in this project.
 
-- `SHEET_ID` = `'1siJmeWuFgVCOxK2acali-_wzY8QSJm20OLxJbP3-dfc'`
-- Credentials are pasted by the operator at runtime and stored in `sessionStorage` only (key: `blend_planner_gcreds`). **Never bundled or committed.**
-- JWT signing uses `SubtleCrypto.sign` (RSASSA-PKCS1-v1_5 / SHA-256) — no npm packages.
-- `savePlanToSheet()` appends to two tabs: **Blend History** (one row per blend) and **Weekly Snapshots** (one row for the week).
-- `SavePlanButton` in `BlendPlanSummary` exposes a 2-step modal: paste creds → add notes → confirm save.
+`src/data/savePlanToSupabase.js` — `savePlanToSupabase({ terminalConfig, blends, startDate, blendTarget, notes })` inserts one row per `BlendRow` into the `blend_plans` table of the shared `terminal-blending-dashboard` Supabase project. That table is also the Blend Case Manager's planner-board source, so a saved plan shows up there within seconds, ready to promote to an active case.
 
-TODO (IT): replace runtime credential paste with a backend auth endpoint.
+Field mapping (`BlendRow` → `blend_plans` column):
+
+| BlendRow | blend_plans |
+|---|---|
+| `tankLabel` / `tankId` | `tank` |
+| — (not tracked here) | `tank_no` (left `null` — physical asset tag only exists on the Case Manager side) |
+| `product` (`regular`/`premium`) | `grade` (`REGULAR`/`PREMIUM`) |
+| `estPumpable` | `est_pumpable_bbl` |
+| `estTOV` | `est_tov_bbl` |
+| `rvpActual` | `incoming_rvp` |
+| `blendTarget` (prop) | `target_rvp` |
+| `butane_bbls` | `butane_bbl` |
+| `trucks` | `trucks` |
+| `blendedRVP` | `blended_rvp` |
+| `startDate`/`startTime`, `endDate`/`endTime` | `window_start` / `window_end` |
+| `truckStart` / `truckFinish` | `truck_start` / `truck_finish` |
+
+`plan_code` is generated as `PLAN-{ISO year}-W{ISO week}-{sequence}`, matching the Blend Case Manager's existing naming convention.
+
+`SavePlanButton` in `BlendPlanSummary` is a single-step modal: notes → confirm. No credentials step — the anon key is already configured via env vars, same as any other Supabase client.
+
+**Removed:** the old Google Sheets flow (`src/data/googleSheets.js`, JWT-signed service-account append, `sessionStorage`-cached credentials) was confirmed unused/legacy and deleted outright — do not resurrect it or the `blend_planner_gcreds` sessionStorage key.
 
 ---
 
@@ -529,4 +547,4 @@ TODO (IT): replace runtime credential paste with a backend auth endpoint.
 - `recharts` is listed in `package.json` but not yet used. Do not remove it without checking with Michael — it may be planned for a future chart view.
 - `font-mono` Tailwind class is used for all numeric displays. Do not replace with inline `fontFamily: 'monospace'` except where Tailwind classes are unavailable (SVG, etc).
 - All visual/CSS changes must be **visual only — zero logic changes**. Do not touch calculation, state, or data-flow code during styling work.
-- Credentials entered at runtime via paste — never bundled or committed. Google Sheets service account credentials stored in `sessionStorage` only (key: `blend_planner_gcreds`).
+- Supabase anon/publishable key lives in `.env.local` (gitignored, see `.env.example`) via Vite's `VITE_` env var convention. Never hardcode it, and never add a service-role key anywhere in this project.

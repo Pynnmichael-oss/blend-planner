@@ -226,7 +226,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export default function BlendPlanSummary({ grid, terminalConfig, openingInventory = [], liftings = [], startDate, specCeiling, blendTarget }) {
+export default function BlendPlanSummary({ grid, terminalConfig, startDate, specCeiling, blendTarget }) {
   const blends = detectBlends(grid, terminalConfig);
   const [pdfStatus, setPdfStatus] = useState(null); // null | 'saving' | 'done'
 
@@ -371,9 +371,8 @@ export default function BlendPlanSummary({ grid, terminalConfig, openingInventor
         <SavePlanButton
           blends={blends}
           terminalConfig={terminalConfig}
-          openingInventory={openingInventory}
-          liftings={liftings}
           startDate={startDate}
+          blendTarget={blendTarget}
         />
       </div>
     </div>
