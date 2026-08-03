@@ -177,7 +177,7 @@ export default function GuideTab() {
             When deciding which tank to blend, rack from the tank with the highest current RVP first. That tank has the most to gain from additional butane. The tank being blended is completely offline to the rack for the duration of the blend period — it cannot supply demand. Make sure the remaining tanks have sufficient inventory to cover demand before toggling blend active.
           </P>
           <P>
-            Blend duration depends on butane volume and truck size. The tool calculates the required butane addition automatically based on opening RVP, target RVP, and current tank inventory. Each butane truck is 190 barrels. The number of trucks required rounds up — partial loads are not dispatched.
+            Blend duration depends on butane volume and truck size. The tool calculates the required butane addition automatically based on opening RVP, target RVP, and current tank inventory. Each butane truck is 190 barrels. Any positive butane requirement dispatches at least one truck: below 190 barrels, that single truck carries the exact amount needed (a partial load); at or above 190 barrels, the truck count truncates to whole trucks (never rounds up, to avoid overshooting the RVP spec ceiling).
           </P>
           <P>
             A tank that shows RECEIPT and then immediately BLEND in consecutive periods may indicate a scheduling conflict. The pipeline product arrives, but the tank cannot be blended and racked simultaneously. Plan the blend to begin after the receipt window closes, or split demand across other tanks during the receipt period.

@@ -2,6 +2,7 @@
  * TankRow — renders a <tr> for one tank across all time periods.
  */
 import VerticalTankGauge from './InventoryBar';
+import { TRUCK_BBLS } from '../../data/truckCalc';
 
 const C = {
   bg:          '#EEF3F6',
@@ -170,8 +171,13 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             {entry.postBlendButane > 0 && (
               <>
                 <div style={{ fontSize: '9px', color: '#00B398', fontFamily: 'monospace', marginTop: '3px' }}>
-                  +{Math.round(entry.postBlendButane).toLocaleString()} bbl · {entry.postBlendTrucks} trucks
+                  +{Math.round(entry.postBlendButane).toLocaleString()} bbl · {entry.postBlendTrucks} {entry.postBlendTrucks === 1 ? 'truck' : 'trucks'}
                 </div>
+                {entry.postBlendButane < TRUCK_BBLS && (
+                  <div style={{ fontSize: '8px', color: '#5E7A8A', fontStyle: 'italic' }}>
+                    Less than full truck
+                  </div>
+                )}
                 <div style={{ fontSize: '9px', color: '#004F71', fontFamily: 'monospace' }}>
                   RVP → {entry.postBlendRVP?.toFixed(2)}
                 </div>

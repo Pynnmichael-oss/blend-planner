@@ -9,8 +9,9 @@
  * baseVol = pumpable + heel (full working volume exposed to blend).
  */
 
+import { truckCountFor } from './truckCalc';
+
 const BUTANE_RVP = 52;
-const TRUCK_BBLS = 190;
 
 /**
  * @param {{ pumpable: number, heel: number, rvpTarget: number, rvpActual: number }}
@@ -25,10 +26,15 @@ export function calcButaneDemand({ pumpable, heel, rvpTarget, rvpActual }) {
   }
 
   const butane_bbls = ((rvpTarget - rvpActual) * baseVol) / denominator;
+  // Any positive butane requirement dispatches at least one truck (we
+  // sometimes order less than a full 190 bbl load and still bring one
+  // physical truck) — never rounds up beyond that, to avoid breaching the
+  // RVP spec ceiling.
+  const trucks = truckCountFor(butane_bbls);
 
   return {
     butane_bbls,
-    trucks_min: Math.floor(butane_bbls / TRUCK_BBLS),
-    trucks_max: Math.floor(butane_bbls / TRUCK_BBLS), // truncate both — rounding up risks breaching 9.0 ceiling
+    trucks_min: trucks,
+    trucks_max: trucks,
   };
 }

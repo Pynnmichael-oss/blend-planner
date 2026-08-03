@@ -6,11 +6,11 @@
 
 import { calcClosingRVP } from './rvpCalc';
 import { distributeReceipts } from './distributeReceipts';
+import { TRUCK_BBLS, resolveTruckLoad } from './truckCalc';
 
 export const TIME_SLOTS = ["00-05", "06-11", "12-17", "18-23"];
 
 const BUTANE_RVP = 52;
-const TRUCK_BBLS = 190;
 
 const SLOT_ORDER = { "00-05": 0, "06-11": 1, "12-17": 2, "18-23": 3 };
 
@@ -414,9 +414,12 @@ export function buildPlanGrid({
             if (margin > 0 && rvpActualBlend < specCeiling) {
               const denom       = BUTANE_RVP - blendTarget;
               const butane_bbls = denom > 0 ? (margin * tov) / denom : 0;
-              const trucks      = Math.floor(butane_bbls / TRUCK_BBLS);
-              const actualButane = trucks * TRUCK_BBLS;
-              if (trucks > 0) {
+              // An explicitly-set Blend must always produce a visible
+              // result once there's a real (positive) butane requirement —
+              // gate on butane_bbls, not on a truck count that can be zero
+              // for sub-190-bbl requirements (see resolveTruckLoad).
+              if (butane_bbls > 0) {
+                const { trucks, actualButane } = resolveTruckLoad(butane_bbls, TRUCK_BBLS);
                 const blendedRVP = ((rvpActualBlend * tov) + (BUTANE_RVP * actualButane))
                   / (tov + actualButane);
                 const newPumpable = Math.max(pumpableClosing + actualButane, 0);

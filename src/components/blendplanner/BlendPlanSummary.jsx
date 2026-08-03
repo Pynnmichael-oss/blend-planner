@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 // specCeiling and blendTarget are lifted to useBlendPlanner — received as props
 import { detectBlends } from '../../data/blendPlanSummary';
 import { generateBlendPDF } from '../../data/generateBlendPDF';
+import { truckCountFor, TRUCK_BBLS } from '../../data/truckCalc';
 import SavePlanButton from '../shared/SavePlanButton';
 
 const C = {
@@ -84,8 +85,8 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
   const butaneHigh = (tov && marginHigh !== null && marginHigh > 0 && denom > 0)
     ? (marginHigh * tov) / denom : null;
 
-  const trucksLow  = butaneLow  !== null ? Math.floor(butaneLow  / 190) : null;
-  const trucksHigh = butaneHigh !== null ? Math.floor(butaneHigh / 190) : null;
+  const trucksLow  = truckCountFor(butaneLow);
+  const trucksHigh = truckCountFor(butaneHigh);
 
   const tankConfig = Object.values(terminalConfig.products)
     .flatMap(p => p.tanks).find(t => t.id === blend.tankId);
@@ -309,7 +310,11 @@ export default function BlendPlanSummary({ grid, terminalConfig, startDate, spec
                     {b.butane_bbls ? Math.round(b.butane_bbls).toLocaleString() + ' bbl' : <span style={{ color: C.muted }}>—</span>}
                   </td>
                   <td style={{ ...tdBase, fontFamily: 'monospace' }}>
-                    {b.trucks !== null ? b.trucks : <span style={{ color: C.muted }}>—</span>}
+                    {b.trucks !== null
+                      ? <span title={b.butane_bbls > 0 && b.butane_bbls < TRUCK_BBLS ? 'Less than full truck' : undefined}>
+                          {b.trucks}{b.butane_bbls > 0 && b.butane_bbls < TRUCK_BBLS ? ' *' : ''}
+                        </span>
+                      : <span style={{ color: C.muted }}>—</span>}
                   </td>
                   <td style={{ ...tdBase, fontFamily: 'monospace', color: '#004F71' }}>
                     {b.blendedRVP ? b.blendedRVP.toFixed(3) : <span style={{ color: C.muted }}>—</span>}
