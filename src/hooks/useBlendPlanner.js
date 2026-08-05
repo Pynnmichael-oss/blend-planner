@@ -3,13 +3,14 @@
  * Owns all planner state and exposes actions to the UI.
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import fortWorthConfig from '../config/fort-worth.json';
 import tampaConfig from '../config/tampa.json';
 import { fortWorthOpeningInventory } from '../mock/fort-worth-inventory';
 import { fortWorthReceipts } from '../mock/fort-worth-t4';
 import { buildPlanGrid } from '../data/inventoryCalc';
 import { buildLiftingsGridWithBase, DEFAULT_DAILY_BASE } from '../data/liftingsCurve';
+import { readSharedFuelsManagerSnapshot } from '../data/sharedFuelsManagerSnapshot';
 
 const TERMINAL_CONFIGS = {
   'fort-worth': fortWorthConfig,
@@ -123,13 +124,27 @@ export default function useBlendPlanner() {
 
   // Applies a FuelsManager snapshot's pumpable bbls per tank; tanks not
   // present in the file are left untouched (still manually editable).
-  function handleFuelsManagerConfirm(inventoryByTank) {
+  // useCallback so the auto-load effect below can depend on it without
+  // re-running every render.
+  const handleFuelsManagerConfirm = useCallback((inventoryByTank) => {
     setOpeningInventory(prev => prev.map(t =>
       t.tankId in inventoryByTank
         ? { ...t, pumpable: Math.round(inventoryByTank[t.tankId]) }
         : t
     ));
-  }
+  }, []);
+
+  // On mount, pick up a FuelsManager snapshot already confirmed on the
+  // terminal-blending-dashboard (shared via localStorage, see
+  // sharedFuelsManagerSnapshot.js) and apply it through the same confirm
+  // path the manual upload uses. This only pre-populates inventory — it
+  // doesn't block or replace the manual FuelsManagerUpload flow, which
+  // still overwrites these values normally if the operator re-uploads
+  // directly in Blend Planner.
+  useEffect(() => {
+    const shared = readSharedFuelsManagerSnapshot();
+    if (shared) handleFuelsManagerConfirm(shared);
+  }, [handleFuelsManagerConfirm]);
 
   return {
     terminalId, terminalConfig, startDate,
