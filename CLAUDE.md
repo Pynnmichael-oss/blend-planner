@@ -15,7 +15,16 @@ Built by Michael Pynn. Domain expert: Kelly (terminal operations).
 - Tailwind CSS v4 (`@import "tailwindcss"` in `index.css` — no config file needed)
 - No backend, no router, no state library — single-page, all state in one hook
 - Deployed to GitHub Pages at `/blend-planner/` (`vite.config.js` `base` is set)
-- `npm run dev` · `npm run build` · `npm run preview` · `npm run lint` · `npm run deploy` (gh-pages)
+- Deployment is automated: `.github/workflows/deploy-pages.yml` builds and
+  publishes `dist/` to the `gh-pages` branch on every push to `master`
+  (`peaceiris/actions-gh-pages`, `force_orphan: true`). It also fails the
+  build if the production bundle references the retired Supabase project
+  id instead of the current one (`grep` guard against both project
+  hostnames). The manual `npm run deploy` (gh-pages package) still works
+  but CI is now the normal path — no need to deploy by hand after a merge
+  to master. `.env.production` supplies the `VITE_SUPABASE_*` vars the CI
+  build step needs.
+- `npm run dev` · `npm run build` · `npm run preview` · `npm run lint` · `npm run deploy` (gh-pages, manual fallback) · `npm test` (vitest)
 - Tailwind v4 is wired via `@import "tailwindcss"` in `index.css` through PostCSS — **`@tailwindcss/vite` is in `package.json` but is NOT added to `vite.config.js`**; do not add it without testing
 - `xlsx` (SheetJS) is used client-side for parsing FuelsManager `.xlsx` tank gauge exports — see [FuelsManager Snapshot Import](#fuelsmanager-snapshot-import)
 
@@ -52,10 +61,16 @@ src/
     distributeReceipts.js          — distributeReceipts() — time-window overlap
     liftingsCurve.js               — buildLiftingsGrid(), getDefaultLifting()
     parseT4.js                     — parseT4() — tab-separated T4 paste parser
+    parseT4.test.js                — vitest coverage for parseT4()
     blendPlanSummary.js            — detectBlends(grid, terminalConfig) → BlendRow[]
     blendLogic.js                  — evaluateBlendSignal() — STUB, pending Kelly spec
+    truckCalc.js                   — resolveTruckLoad(), truckCountFor(), formatTruckCount() — shared butane-truck math (see Key Constants / Blend-end butane injection)
+    truckCalc.test.js              — vitest coverage for truckCalc.js
+    inventoryCalc.blend.test.js    — vitest coverage for buildPlanGrid()'s blend-end/butane branch
+    generatePlanPDF.js             — generatePlanPDF() — Save Plan PDF (weekly day-by-day tank status digest)
+    generateBlendPDF.js            — generateBlendPDF() — Save Blend PDFs (per-blend summary), both via jsPDF
     supabaseClient.js               — Supabase client (anon key from Vite env vars, no backend)
-    savePlanToSupabase.js           — savePlanToSupabase() — inserts BlendRows into shared blend_plans table
+    savePlanToSupabase.js           — savePlanToSupabase() — inserts BlendRows into shared blend_plans table (insert-only, see Supabase Integration section)
     parseFuelsManager.js           — parseFuelsManagerWorkbook(), getLatestValidByTank() — xlsx tank gauge import
 
   hooks/
@@ -202,6 +217,10 @@ TIME_SLOTS = ["00-05", "06-11", "12-17", "18-23"]  // 6-hour windows
 
 // src/data/butaneCalc.js
 BUTANE_RVP = 52
+
+// src/data/truckCalc.js (exported; the sole source of truth for truck math —
+// inventoryCalc.js, butaneCalc.js, and BlendPlanSummary.jsx all call into it
+// rather than reimplementing Math.floor(butane/190))
 TRUCK_BBLS = 190
 
 // src/data/liftingsCurve.js
@@ -241,8 +260,8 @@ openingInventory + receipts + liftings
 ```
 
 ### Blend-end butane injection
-When `blendActive` flips false (tank just stopped blending), `buildPlanGrid` immediately calculates butane demand for that tank. If `trucks > 0` and `rvpActual < specCeiling`, it:
-1. Attaches `blendSummary: { estPumpable, tov, rvpActual, rvpTarget, butane_bbls, trucks, actualButane, blendedRVP }` to the **last blending period's** result entry (mutates in-place via index).
+When `blendActive` flips false (tank just stopped blending), `buildPlanGrid` immediately calculates butane demand for that tank. If `butane_bbls > 0` and `rvpActual < specCeiling`, it:
+1. Attaches `blendSummary: { estPumpable, tov, rvpActual, rvpTarget, butane_bbls, trucks, actualButane, blendedRVP }` to the **last blending period's** result entry (mutates in-place via index). `trucks`/`actualButane` come from `truckCalc.resolveTruckLoad(butane_bbls)` — any positive requirement gets at least 1 truck, even below `TRUCK_BBLS` (190). The gate is on `butane_bbls > 0`, not `trucks > 0` — those used to be equivalent before `resolveTruckLoad` existed, but relying on the old `trucks > 0` gate would silently drop the whole `blendSummary`/`postBlend*` attachment for sub-190 bbl requirements.
 2. Overrides the **first post-blend period's** `openingInventory`, `openingRVP`, `closingInventory`, `closingTOV`, `closingRVP`, and adds `postBlendButane`, `postBlendTrucks`, `postBlendRVP` fields.
 
 `detectBlends(grid, terminalConfig)` reads `blendSummary` off the last period of each run to populate the `BlendPlanSummary` table.
@@ -496,11 +515,15 @@ Field mapping (`BlendRow` → `blend_plans` column):
 | `startDate`/`startTime`, `endDate`/`endTime` | `window_start` / `window_end` |
 | `truckStart` / `truckFinish` | `truck_start` / `truck_finish` |
 
-`plan_code` is generated as `PLAN-{ISO year}-W{ISO week}-{sequence}`, matching the Blend Case Manager's existing naming convention.
+`plan_code` is generated per-row as `PLAN-{YYYYMMDD}-{tank token}-{time}-{seq}{random}` (`planCodeFor` in `savePlanToSupabase.js`) — a locally-unique, no-lookup code. Every save does a plain `insert`; **prior plans are never overwritten or reused**, even if the same plan was saved before and later reverted from `promoted` back to `proposed` on the Case Manager side — that will produce a duplicate row. (An earlier pass added ISO-week collision checking and reverted-row reuse; both were removed in the "Simplify saved plan persistence" pass — do not assume either exists without checking the file.)
+
+`tank_no` is populated from a hardcoded `TANK_ASSET_TAG` map (`TK55→23155`, `TK56→23156`, `TK04→27404`, `TK05→27405`) so the Blend Case Manager's valve-alignment checklist, which is keyed by physical asset tag, resolves correctly. `TK03` has no known asset tag yet and is intentionally left `null` rather than guessed — confirm with terminal ops before adding one.
 
 `SavePlanButton` in `BlendPlanSummary` is a single-step modal: notes → confirm. No credentials step — the anon key is already configured via env vars, same as any other Supabase client.
 
-**Removed:** the old Google Sheets flow (`src/data/googleSheets.js`, JWT-signed service-account append, `sessionStorage`-cached credentials) was confirmed unused/legacy and deleted outright — do not resurrect it or the `blend_planner_gcreds` sessionStorage key.
+`AppShell`'s "Save Plan PDF" button (`generatePlanPDF`) and `BlendPlanSummary`'s "Save Blend PDFs" button (`generateBlendPDF`, per-blend) are local-only jsPDF exports — no Supabase involvement.
+
+**Removed:** the old Google Sheets flow (`src/data/googleSheets.js`, JWT-signed service-account append, `sessionStorage`-cached credentials) was confirmed unused/legacy and deleted outright — do not resurrect it or the `blend_planner_gcreds` sessionStorage key. `src/config/google-credentials.json` (a real service-account key for that old flow) is `.gitignore`d and untracked, but still sits on disk locally — it's dead weight from the removed integration, not read by any code path. Don't add anything that reads it; flag for deletion from disk rather than re-wiring it.
 
 ---
 
