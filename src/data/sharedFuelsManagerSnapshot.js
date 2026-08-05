@@ -1,13 +1,18 @@
 /**
- * Reads the FuelsManager snapshot confirmed on the terminal-blending-dashboard
- * (assets/js/fuels-snapshot.js -> saveSnapshot()), shared via localStorage
- * because both apps deploy as GitHub Pages project sites under the same
- * pynnmichael-oss.github.io origin.
+ * Reads the FuelsManager snapshot shared with the terminal-blending-dashboard
+ * via localStorage, because both apps deploy as GitHub Pages project sites
+ * under the same pynnmichael-oss.github.io origin. The dashboard writes this
+ * same key from two different paths that both produce the same shape:
+ *   - a manual FuelsManager .xlsx confirm (assets/js/fuels-snapshot.js ->
+ *     saveSnapshot())
+ *   - its periodic live tank-feed sync (data/tanks.json ->
+ *     syncLiveTankSnapshot()), which also stamps a `source` field
+ *     (e.g. "SharePoint · Terminal Tank Readings")
  *
  * Shape on disk: { tanks: { [tankId]: { available, workingCap, product,
- * pulledAt, skippedBadRows } | null }, confirmedAt }. Tank ids are already
- * dashboard-side-mapped to Blend-Planner's own internal scheme (e.g. "TK55"),
- * so no further id translation is needed here.
+ * pulledAt, skippedBadRows, ... } | null }, confirmedAt, source? }. Tank ids
+ * are already dashboard-side-mapped to Blend-Planner's own internal scheme
+ * (e.g. "TK55"), so no further id translation is needed here.
  *
  * Pure module — does not touch parseFuelsManager.js or React state. Never
  * throws; any malformed/stale/unreadable snapshot logs a console.warn and
@@ -17,9 +22,12 @@
 export const SHARED_SNAPSHOT_KEY = 'gp_fuelsManagerSnapshot';
 
 /**
- * @returns {{ [tankId]: number } | null} pumpable bbls per tank, in the same
- *   shape handleFuelsManagerConfirm() already accepts from the manual
- *   FuelsManagerUpload path — or null if there's nothing usable.
+ * @returns {{ inventoryByTank: { [tankId]: number }, confirmedAt: string|null,
+ *   source: string|null } | null} `inventoryByTank` is pumpable bbls per tank,
+ *   in the same shape handleFuelsManagerConfirm() already accepts from the
+ *   manual FuelsManagerUpload path. `confirmedAt`/`source` describe when and
+ *   how the dashboard last wrote this snapshot, for display only. Returns
+ *   null if there's nothing usable.
  */
 export function readSharedFuelsManagerSnapshot() {
   let raw;
@@ -57,5 +65,9 @@ export function readSharedFuelsManagerSnapshot() {
     return null;
   }
 
-  return inventoryByTank;
+  return {
+    inventoryByTank,
+    confirmedAt: typeof parsed.confirmedAt === 'string' ? parsed.confirmedAt : null,
+    source: typeof parsed.source === 'string' ? parsed.source : null,
+  };
 }

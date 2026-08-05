@@ -22,8 +22,18 @@ const inputBase = {
   textAlign: 'right',
 };
 
-export default function OpeningInventoryForm({ openingInventory, terminalConfig, setOpeningInventory, specCeiling, setSpecCeiling, blendTarget, setBlendTarget, onFuelsManagerConfirm }) {
+export default function OpeningInventoryForm({ openingInventory, terminalConfig, setOpeningInventory, specCeiling, setSpecCeiling, blendTarget, setBlendTarget, onFuelsManagerConfirm, fuelsManagerUpdatedAt }) {
   const [fmOpen, setFmOpen] = useState(false);
+
+  const fuelsManagerNote = (() => {
+    if (!fuelsManagerUpdatedAt) return null;
+    const d = new Date(fuelsManagerUpdatedAt.confirmedAt);
+    const when = isNaN(d) ? fuelsManagerUpdatedAt.confirmedAt : d.toLocaleString();
+    const label = fuelsManagerUpdatedAt.source === 'dashboard'
+      ? 'Synced from Dashboard'
+      : 'Manual upload';
+    return `${label} · ${when}`;
+  })();
 
   function handleChange(tankId, field, raw) {
     const value = field === 'pumpable'
@@ -53,6 +63,11 @@ export default function OpeningInventoryForm({ openingInventory, terminalConfig,
         <span>Load FuelsManager Snapshot</span>
         <span style={{ color: C.muted, fontSize: '10px' }}>{fmOpen ? '▲' : '▼'}</span>
       </button>
+      {fuelsManagerNote && (
+        <div style={{ fontSize: '9px', color: C.muted, marginTop: '4px' }}>
+          {fuelsManagerNote}
+        </div>
+      )}
       {fmOpen && (
         <div style={{ marginTop: '8px' }}>
           <FuelsManagerUpload onConfirm={onFuelsManagerConfirm} />

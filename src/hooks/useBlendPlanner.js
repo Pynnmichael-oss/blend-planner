@@ -122,16 +122,27 @@ export default function useBlendPlanner() {
     }));
   }
 
+  // When/how openingInventory's FuelsManager-derived values were last set:
+  // { confirmedAt: ISO string, source: 'dashboard' | 'manual' } | null.
+  // Surfaced in OpeningInventoryForm as a "last updated" note.
+  const [fuelsManagerUpdatedAt, setFuelsManagerUpdatedAt] = useState(null);
+
   // Applies a FuelsManager snapshot's pumpable bbls per tank; tanks not
   // present in the file are left untouched (still manually editable).
-  // useCallback so the auto-load effect below can depend on it without
-  // re-running every render.
-  const handleFuelsManagerConfirm = useCallback((inventoryByTank) => {
+  // `meta` distinguishes an auto-loaded dashboard snapshot (which carries
+  // its own confirmedAt) from a manual upload inside Blend Planner itself
+  // (which is "now"). useCallback so the auto-load effect below can depend
+  // on it without re-running every render.
+  const handleFuelsManagerConfirm = useCallback((inventoryByTank, meta) => {
     setOpeningInventory(prev => prev.map(t =>
       t.tankId in inventoryByTank
         ? { ...t, pumpable: Math.round(inventoryByTank[t.tankId]) }
         : t
     ));
+    setFuelsManagerUpdatedAt({
+      confirmedAt: meta?.confirmedAt ?? new Date().toISOString(),
+      source: meta?.source ?? 'manual',
+    });
   }, []);
 
   // On mount, pick up a FuelsManager snapshot already confirmed on the
@@ -143,7 +154,12 @@ export default function useBlendPlanner() {
   // directly in Blend Planner.
   useEffect(() => {
     const shared = readSharedFuelsManagerSnapshot();
-    if (shared) handleFuelsManagerConfirm(shared);
+    if (shared) {
+      handleFuelsManagerConfirm(shared.inventoryByTank, {
+        confirmedAt: shared.confirmedAt,
+        source: 'dashboard',
+      });
+    }
   }, [handleFuelsManagerConfirm]);
 
   return {
@@ -157,6 +173,7 @@ export default function useBlendPlanner() {
     transfers, setTransfer,
     setReceiptAllocation, setRackTank,
     handleFuelsManagerConfirm,
+    fuelsManagerUpdatedAt,
     parsedReceipts, setParsedReceipts,
     rvpValues, setRvpValues,
     rvpConfirmed, setRvpConfirmed,
