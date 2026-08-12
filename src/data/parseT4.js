@@ -3,13 +3,41 @@
  *
  * Two input formats are supported:
  *
- * 1. Tab-separated (paste from the Explorer T4 portal). Column indices (0-based):
- *      0  — Start datetime
- *      3  — Line (FM1, FM6, etc.)
- *      5  — Batch code  (EXP-[SUPPLIER]-[GRADE]-[CYCLE]-[SUFFIX])
- *      7  — Supplier
- *      11 — Volume (strip commas)
- *      13 — Rate (bbls/hr, strip commas)
+ * 1. Tab-separated (paste from the Explorer T4 portal, from Excel after a
+ *    round-trip through it, or straight from an export email). Header field
+ *    order (0-based):
+ *      0  Start Date
+ *      1  Line
+ *      2  Ver
+ *      3  Evt Loc
+ *      4  Location Description
+ *      5  Batch Code       (EXP-[SUPPLIER]-[GRADE]-[CYCLE]-[SUFFIX])
+ *      6  Legacy Batch Code
+ *      7  Sup               (blank in this export)
+ *      8  Con               (supplier abbreviation, e.g. MTV/EXN)
+ *      9  Tnk
+ *      10 Grt By
+ *      11 Grt To
+ *      12 Sch Vol
+ *      13 UOM
+ *      14 Rate
+ *      15 Action
+ *      16 Date Created
+ *      17 Created By
+ *      18 Remark
+ *      19 Coverage
+ *
+ *    Rows are located by pattern instead of by splitting on newlines, because
+ *    pasting an HTML table straight from an email can flatten every row into
+ *    one unbroken line with no row breaks at all (only Excel reliably keeps
+ *    one row per line). Each row is found by its Start Date + Line# + Ver# +
+ *    Evt Loc signature — the row's own "Date Created" field also looks like a
+ *    date/time, but it's followed by a username, not by Line/Ver numbers, so
+ *    it can't be mistaken for the start of a new row. Batch code, volume, and
+ *    rate are then extracted from that row's text by pattern match rather
+ *    than fixed column position, so this is robust to minor column drift too.
+ *    Supplier is read off the batch code itself (its 2nd segment) rather than
+ *    a fixed column, since that field is documented to always carry it.
  *
  * 2. Line-per-field (paste from Outlook, which flattens the T4 table so each
  *    field lands on its own physical line instead of being tab-separated).
@@ -50,6 +78,11 @@
 const BATCH_CODE_PATTERN = /^EXP-[A-Z]+-[A-Z0-9]+-\d{3}-[A-Z]+$/;
 const OUTLOOK_RECORD_FIELD_COUNT = 19;
 
+// Tab-format row-start signature: Start Date, Line #, Ver #, Evt Loc code.
+const TAB_ROW_START = /(\d{2}\/\d{2}\/\d{2}\s+\d{2}:\d{2})\s+(\d+)\s+(\d+)\s+([A-Z0-9]{2,6})\b/g;
+const TAB_BATCH_CODE = /\bEXP-[A-Z]+-[A-Z0-9]+-\d{3}-[A-Z]+\b/;
+const TAB_VOL_RATE = /([\d,]+\.?\d*)\s+Bbls\s+([\d,]+\.?\d*)/i;
+
 function normalizeDatetime(raw) {
   const dt = new Date(raw);
   if (isNaN(dt.getTime())) return raw;
@@ -64,21 +97,33 @@ function resolveProduct(grade, terminalConfig) {
 }
 
 function parseT4Tabs(rawText, terminalConfig) {
-  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+  const raw = rawText.replace(/\r\n?/g, '\n');
   const receipts = [];
 
-  for (const line of lines) {
-    const cols = line.split('\t');
-    if (cols.length < 14) continue;
+  const starts = [];
+  let m;
+  TAB_ROW_START.lastIndex = 0;
+  while ((m = TAB_ROW_START.exec(raw))) {
+    starts.push({ index: m.index, dt: m[1], line: m[2] });
+  }
 
-    const startDatetime = normalizeDatetime(cols[0].trim());
-    const lineCode       = cols[3].trim();
-    const batchCode      = cols[5].trim();
-    const supplier       = cols[7].trim();
-    const volume         = parseFloat(cols[11].replace(/,/g, ''));
-    const rate           = parseFloat(cols[13].replace(/,/g, ''));
+  for (let i = 0; i < starts.length; i++) {
+    const chunkStart = starts[i].index;
+    const chunkEnd = i + 1 < starts.length ? starts[i + 1].index : raw.length;
+    const chunk = raw.slice(chunkStart, chunkEnd);
 
-    if (!startDatetime || !batchCode || isNaN(volume) || isNaN(rate)) continue;
+    const batchMatch = chunk.match(TAB_BATCH_CODE);
+    const volRateMatch = chunk.match(TAB_VOL_RATE);
+    if (!batchMatch || !volRateMatch) continue;
+
+    const batchCode = batchMatch[0];
+    const volume = parseFloat(volRateMatch[1].replace(/,/g, ''));
+    const rate = parseFloat(volRateMatch[2].replace(/,/g, ''));
+    if (isNaN(volume) || isNaN(rate)) continue;
+
+    const startDatetime = normalizeDatetime(starts[i].dt.trim());
+    const lineCode = starts[i].line.trim();
+    const supplier = batchCode.split('-')[1] ?? '';
 
     const grade   = batchCode.split('-')[2] ?? '';
     const product = resolveProduct(grade, terminalConfig);
