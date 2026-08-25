@@ -81,8 +81,6 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
                        : dayBg;
         const leftBorder = CELL_LEFT_BORDER[status];
         const invColor = INV_COLOR[status] ?? C.text;
-        const recVol   = entry.receipts.reduce((s, r) => s + r.volume, 0);
-        const liftVol  = entry.rackLoadings;
         // Net change captures receipts + liftings + blend movement together —
         // always just closing - opening, so it matches whatever actually
         // happened this period without reconstructing it from separate fields.
@@ -165,10 +163,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             <div className="font-mono" style={{ fontSize: '12px', fontWeight: 600, color: invColor, lineHeight: 1.3 }}>
               {Math.round(entry.openingInventory).toLocaleString()} bbl
             </div>
-            <div className="font-mono" style={{
-              fontSize: '10px', fontWeight: 700, lineHeight: 1.3,
-              color: netChange > 0 ? C.amber : netChange < 0 ? C.red : C.muted,
-            }}>
+            <div className="font-mono" style={{ fontSize: '12px', fontWeight: 600, color: invColor, lineHeight: 1.3 }}>
               {netChange > 0 ? '+' : ''}{Math.round(netChange).toLocaleString()} bbl
             </div>
 
@@ -226,24 +221,6 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             )}
             {entry.belowHeel && (
               <div style={{ fontSize: '8px', color: '#5E7A8A', letterSpacing: '0.06em', marginTop: '1px' }}>BELOW HEEL</div>
-            )}
-
-            {/* Flows: ↑ receipts, ↓ liftings, ↗ spill, → transfer out, ← transfer in */}
-            {(recVol > 0 || liftVol < 0 || entry.spillVolume > 0 || entry.transferOutVol > 0 || entry.transferInVol > 0) && (
-              <div className="font-mono" style={{ fontSize: '11px', fontWeight: 700, color: '#9DB0BC', marginTop: '2px' }}>
-                {recVol > 0 && <span style={{ color: '#00B398' }}>↑{Math.round(recVol).toLocaleString()}</span>}
-                {recVol > 0 && liftVol < 0 && ' '}
-                {liftVol < 0 && <span style={{ color: '#5E7A8A' }}>↓{Math.round(Math.abs(liftVol)).toLocaleString()}</span>}
-                {entry.spillVolume > 0 && (
-                  <span style={{ color: '#C0882E' }}>{(recVol > 0 || liftVol < 0) ? ' ' : ''}↗{Math.round(entry.spillVolume).toLocaleString()} spill</span>
-                )}
-                {entry.transferOutVol > 0 && (
-                  <span style={{ color: C.muted }}>{(recVol > 0 || liftVol < 0 || entry.spillVolume > 0) ? ' ' : ''}→{Math.round(entry.transferOutVol).toLocaleString()}</span>
-                )}
-                {entry.transferInVol > 0 && (
-                  <span style={{ color: C.blue }}>{(recVol > 0 || liftVol < 0 || entry.spillVolume > 0 || entry.transferOutVol > 0) ? ' ' : ''}←{Math.round(entry.transferInVol).toLocaleString()}</span>
-                )}
-              </div>
             )}
           </td>
         );
