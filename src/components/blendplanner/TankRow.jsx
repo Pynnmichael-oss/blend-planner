@@ -163,7 +163,10 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             <div className="font-mono" style={{ fontSize: '12px', fontWeight: 600, color: invColor, lineHeight: 1.3 }}>
               {Math.round(entry.openingInventory).toLocaleString()} bbl
             </div>
-            <div className="font-mono" style={{ fontSize: '12px', fontWeight: 600, color: invColor, lineHeight: 1.3 }}>
+            <div className="font-mono" style={{
+              fontSize: '12px', fontWeight: 600, lineHeight: 1.3,
+              color: Math.sign(netChange) > 0 ? C.amber : Math.sign(netChange) < 0 ? C.red : invColor,
+            }}>
               {netChange > 0 ? '+' : ''}{Math.round(netChange).toLocaleString()} bbl
             </div>
 
