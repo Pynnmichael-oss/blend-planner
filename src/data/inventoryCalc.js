@@ -12,6 +12,9 @@ export const TIME_SLOTS = ["00-05", "06-11", "12-17", "18-23"];
 
 const BUTANE_RVP = 52;
 
+// TODO: Kelly — confirm floor applies to rack draw only, not all outflow.
+const MIN_PUMPABLE = 500;
+
 const SLOT_ORDER = { "00-05": 0, "06-11": 1, "12-17": 2, "18-23": 3 };
 
 // startDate anchors the grid — no longer derived from receipts.
@@ -296,6 +299,79 @@ export function buildPlanGrid({
         const primaryLift = handoffRackId ? (totalLifting - handoffVolume) : totalLifting;
         const handoffLift = handoffRackId ? handoffVolume : 0;
 
+        // ── Same-period MIN_PUMPABLE floor cascade for rack draw ────────
+        // When the primary (or handoff) rack tank can't absorb its assigned
+        // draw without dropping below MIN_PUMPABLE, push the remainder to
+        // the next highest-RVP non-blending, non-idle tank for the SAME
+        // period (a same-period partial split — distinct from the existing
+        // heel-triggered handoff, which rolls at a period boundary). This
+        // cascades further if that tank also hits its floor. If no eligible
+        // tank has room left, total rack output is capped at whatever could
+        // be pumped and a warning is logged — an edge case not yet covered
+        // by Kelly's spec (all tanks floor-limited simultaneously).
+        const rackDraws = {}; // tankId → accumulated rack lift this period (negative = outbound)
+
+        const cascadeTankAvailable = (tankId) => {
+          const t = product.tanks.find(x => x.id === tankId);
+          if (!t) return 0;
+          const tOpening    = lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0;
+          const tReceiptVol = (receiptAssignment[t.id] ?? []).reduce((s, r) => s + r.volume, 0);
+          const tSpace      = Math.max(0, (t.safeFill - t.heel) - tOpening);
+          // Approximation: capped receipts here ignore this period's rack
+          // draw (which would otherwise open up more room) — close enough
+          // for cascade candidate selection; the per-tank loop below still
+          // does the exact calculation for the actual closing inventory.
+          const tCappedReceipts = Math.min(tReceiptVol, tSpace);
+          const alreadyDrawn    = rackDraws[tankId] ?? 0; // negative
+          return tOpening + tCappedReceipts + alreadyDrawn;
+        };
+
+        const pickCascadeTank = () => {
+          const pool = product.tanks.filter(t => {
+            const manual = manualInputs[`${t.id}-${date}-${timeSlot}`] ?? {};
+            if (manual.blendActive || manual.idle) return false;
+            return cascadeTankAvailable(t.id) - MIN_PUMPABLE > 0;
+          });
+          if (!pool.length) return null;
+          return pool.reduce((bestId, t) => {
+            const rvp     = lastPeriod[t.id]?.closingRVP ?? openingMap[t.id]?.rvp ?? 0;
+            const bestRvp = lastPeriod[bestId]?.closingRVP ?? openingMap[bestId]?.rvp ?? 0;
+            return rvp > bestRvp ? t.id : bestId;
+          }, pool[0].id);
+        };
+
+        const applyRackDemand = (startTankId, demand) => {
+          let remaining = demand; // negative
+          let tankId    = startTankId;
+          while (remaining < 0 && tankId) {
+            const headroom = Math.max(cascadeTankAvailable(tankId) - MIN_PUMPABLE, 0);
+            const applied  = Math.min(Math.abs(remaining), headroom);
+            if (applied > 0) {
+              rackDraws[tankId] = (rackDraws[tankId] ?? 0) - applied;
+              remaining += applied;
+            }
+            if (remaining < 0) {
+              tankId = pickCascadeTank();
+              if (!tankId) {
+                console.warn(
+                  `[inventoryCalc] MIN_PUMPABLE floor exhausted all eligible ${productKey} tanks ` +
+                  `on ${date} ${timeSlot} — ${Math.abs(remaining).toFixed(0)} bbl of rack demand could not be pumped.`
+                );
+                break;
+              }
+            }
+          }
+        };
+
+        if (primaryRackId) {
+          if (primaryLift < 0) applyRackDemand(primaryRackId, primaryLift);
+          else rackDraws[primaryRackId] = (rackDraws[primaryRackId] ?? 0) + primaryLift;
+        }
+        if (handoffRackId) {
+          if (handoffLift < 0) applyRackDemand(handoffRackId, handoffLift);
+          else rackDraws[handoffRackId] = (rackDraws[handoffRackId] ?? 0) + handoffLift;
+        }
+
         // ── Transfer in-map for this period ──────────────────────────
         const transferInMap = {};
         for (const [key, t] of Object.entries(transfers)) {
@@ -319,13 +395,14 @@ export function buildPlanGrid({
           const blendActive  = manual.blendActive ?? false;
 
           // Determine this tank's rack role
-          const isPrimary  = tank.id === primaryRackId && totalLifting !== 0;
-          const isHandoff  = tank.id === handoffRackId && handoffRackId !== null;
-          const isRackTank = isPrimary || isHandoff;
-
-          const rackLoadings = isPrimary ? primaryLift
-                             : isHandoff ? handoffLift
-                             : 0;
+          const rackLoadings  = rackDraws[tank.id] ?? 0;
+          const isPrimary     = tank.id === primaryRackId && totalLifting !== 0;
+          const isHandoff     = tank.id === handoffRackId && handoffRackId !== null;
+          // A tank can also pick up rack draw purely via the MIN_PUMPABLE
+          // cascade above without being the assigned primary/handoff — treat
+          // it as a rack tank too so status/onRack reflect the real draw.
+          const isCascadeTank = !isPrimary && !isHandoff && rackLoadings < 0;
+          const isRackTank    = isPrimary || isHandoff || isCascadeTank;
 
           const receiptVolume  = tankReceipts.reduce((s, r) => s + r.volume, 0);
           const isManualIdle   = manual.idle ?? false;

@@ -83,6 +83,10 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
         const invColor = INV_COLOR[status] ?? C.text;
         const recVol   = entry.receipts.reduce((s, r) => s + r.volume, 0);
         const liftVol  = entry.rackLoadings;
+        // Net change captures receipts + liftings + blend movement together —
+        // always just closing - opening, so it matches whatever actually
+        // happened this period without reconstructing it from separate fields.
+        const netChange = entry.closingInventory - entry.openingInventory;
 
         return (
           <td
@@ -157,9 +161,15 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
               <VerticalTankGauge fillPct={entry.fillPct} status={status} height={56} width={16} />
             </div>
 
-            {/* Closing inventory */}
+            {/* Opening inventory (primary) + net change (secondary) */}
             <div className="font-mono" style={{ fontSize: '12px', fontWeight: 600, color: invColor, lineHeight: 1.3 }}>
-              {Math.round(entry.closingInventory).toLocaleString()} bbl
+              {Math.round(entry.openingInventory).toLocaleString()} bbl
+            </div>
+            <div className="font-mono" style={{
+              fontSize: '10px', fontWeight: 700, lineHeight: 1.3,
+              color: netChange > 0 ? C.amber : netChange < 0 ? C.red : C.muted,
+            }}>
+              {netChange > 0 ? '+' : ''}{Math.round(netChange).toLocaleString()} bbl
             </div>
 
             {/* RVP */}
