@@ -285,10 +285,6 @@ export function buildPlanGrid({
           }
         }
 
-        // Persist the selected rack tank for this product
-        if (primaryRackId) currentRackTank[productKey] = primaryRackId;
-        if (primaryRackId) lastRackedTank[productKey]  = primaryRackId;
-
         // Volume allocation: primary gets remainder, handoff gets its slice
         const clampedHandoff = Math.min(Math.abs(handoffVolume), Math.abs(totalLifting));
         const primaryVolume  = totalLifting + clampedHandoff;  // totalLifting is negative; clampedHandoff is positive sign adjustment
@@ -340,9 +336,13 @@ export function buildPlanGrid({
           }, pool[0].id);
         };
 
+        // Returns the tankId that ends up carrying the tail of the demand —
+        // the same tank as startTankId when no floor was hit, or the final
+        // tank in the cascade chain otherwise.
         const applyRackDemand = (startTankId, demand) => {
-          let remaining = demand; // negative
-          let tankId    = startTankId;
+          let remaining   = demand; // negative
+          let tankId      = startTankId;
+          let finalTankId = startTankId;
           while (remaining < 0 && tankId) {
             const headroom = Math.max(cascadeTankAvailable(tankId) - MIN_PUMPABLE, 0);
             const applied  = Math.min(Math.abs(remaining), headroom);
@@ -350,6 +350,7 @@ export function buildPlanGrid({
               rackDraws[tankId] = (rackDraws[tankId] ?? 0) - applied;
               remaining += applied;
             }
+            finalTankId = tankId;
             if (remaining < 0) {
               tankId = pickCascadeTank();
               if (!tankId) {
@@ -361,16 +362,31 @@ export function buildPlanGrid({
               }
             }
           }
+          return finalTankId;
         };
 
+        // primaryFinalTankId / handoffFinalTankId track where each chain
+        // actually ends up — the tank that hit its floor and handed off
+        // mid-chain does NOT keep the rack role once it's floored out.
+        let primaryFinalTankId = primaryRackId;
         if (primaryRackId) {
-          if (primaryLift < 0) applyRackDemand(primaryRackId, primaryLift);
+          if (primaryLift < 0) primaryFinalTankId = applyRackDemand(primaryRackId, primaryLift);
           else rackDraws[primaryRackId] = (rackDraws[primaryRackId] ?? 0) + primaryLift;
         }
+        let handoffFinalTankId = handoffRackId;
         if (handoffRackId) {
-          if (handoffLift < 0) applyRackDemand(handoffRackId, handoffLift);
+          if (handoffLift < 0) handoffFinalTankId = applyRackDemand(handoffRackId, handoffLift);
           else rackDraws[handoffRackId] = (rackDraws[handoffRackId] ?? 0) + handoffLift;
         }
+
+        // Persist the selected rack tank for this product — follow the
+        // cascade to its final destination, same pointer-update pattern as
+        // the existing heel-triggered handoff above, so a MIN_PUMPABLE floor
+        // event moves the carry-forward pointer immediately instead of
+        // leaving the exhausted tank keyed as the rack tank for every
+        // following period.
+        if (primaryFinalTankId) currentRackTank[productKey] = primaryFinalTankId;
+        if (primaryFinalTankId) lastRackedTank[productKey]  = primaryFinalTankId;
 
         // ── Transfer in-map for this period ──────────────────────────
         const transferInMap = {};
@@ -394,15 +410,15 @@ export function buildPlanGrid({
           const tankReceipts = receiptAssignment[tank.id] ?? [];
           const blendActive  = manual.blendActive ?? false;
 
-          // Determine this tank's rack role
-          const rackLoadings  = rackDraws[tank.id] ?? 0;
-          const isPrimary     = tank.id === primaryRackId && totalLifting !== 0;
-          const isHandoff     = tank.id === handoffRackId && handoffRackId !== null;
-          // A tank can also pick up rack draw purely via the MIN_PUMPABLE
-          // cascade above without being the assigned primary/handoff — treat
-          // it as a rack tank too so status/onRack reflect the real draw.
-          const isCascadeTank = !isPrimary && !isHandoff && rackLoadings < 0;
-          const isRackTank    = isPrimary || isHandoff || isCascadeTank;
+          // Determine this tank's rack role. Keyed off the FINAL tank in
+          // each chain (not the originally-assigned primary/handoff id) —
+          // a tank that hit the MIN_PUMPABLE floor and handed off mid-period
+          // still shows its actual bbl movement, but only the tank that
+          // ends the period as the active rack tank gets the RACK badge.
+          const rackLoadings = rackDraws[tank.id] ?? 0;
+          const isPrimary    = tank.id === primaryFinalTankId && totalLifting !== 0;
+          const isHandoff    = tank.id === handoffFinalTankId && handoffRackId !== null;
+          const isRackTank   = isPrimary || isHandoff;
 
           const receiptVolume  = tankReceipts.reduce((s, r) => s + r.volume, 0);
           const isManualIdle   = manual.idle ?? false;

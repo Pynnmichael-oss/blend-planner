@@ -51,15 +51,57 @@ describe('MIN_PUMPABLE floor — same-period cascade', () => {
     const tk1 = find(grid, 'TK1');
     const tk2 = find(grid, 'TK2');
 
-    // TK1 draws down to exactly the 500 bbl floor, not below.
+    // TK1 draws down to exactly the 500 bbl floor, not below — but it hands
+    // off the rack role the moment it hits the floor, so it does NOT keep
+    // the RACK badge for the split period; it falls through to whatever
+    // status its own (non-rack) activity implies.
     expect(tk1.rackLoadings).toBeCloseTo(-500, 6);
     expect(tk1.closingInventory).toBeCloseTo(500, 6);
-    expect(tk1.status).toBe('RACK');
+    expect(tk1.status).toBe('IDLE');
 
-    // The remaining 300 bbl of demand cascades to TK2 in the SAME period.
+    // The remaining 300 bbl of demand cascades to TK2 in the SAME period,
+    // and TK2 is the sole tank badged RACK for this period.
     expect(tk2.rackLoadings).toBeCloseTo(-300, 6);
     expect(tk2.closingInventory).toBeCloseTo(4700, 6);
     expect(tk2.status).toBe('RACK');
+  });
+
+  it('moves the carry-forward rack pointer to the cascade destination so the floored tank does not reclaim RACK next period', () => {
+    const terminalConfig = twoTankConfig();
+    const openingInventory = [
+      { tankId: 'TK1', pumpable: 1000, rvp: 5 },
+      { tankId: 'TK2', pumpable: 5000, rvp: 3 },
+    ];
+    const liftings = [
+      // Period 1 floors TK1 and cascades to TK2 (as in the test above).
+      { tankId: 'TK1', date: START_DATE, timeSlot: '00-05', volume: -800 },
+      // Period 2 has demand too, but no explicit rackTankAssignment — it
+      // must fall back to the auto-selected / carry-forward rack tank.
+      { tankId: 'TK1', date: START_DATE, timeSlot: '06-11', volume: -200 },
+    ];
+    const rackTankAssignments = {
+      [`regular-${START_DATE}-00-05`]: { primary: 'TK1', handoff: null, handoffVolume: 0 },
+    };
+
+    const grid = buildPlanGrid({
+      terminalConfig,
+      openingInventory,
+      receipts: [],
+      planDays: 1,
+      startDate: START_DATE,
+      liftings,
+      rackTankAssignments,
+    });
+
+    const tk1Next = find(grid, 'TK1', '06-11');
+    const tk2Next = find(grid, 'TK2', '06-11');
+
+    // The carry-forward pointer must follow the cascade to TK2 — TK1 is
+    // already at its floor and must not be re-selected as the rack tank.
+    expect(tk1Next.rackLoadings).toBe(0);
+    expect(tk1Next.status).not.toBe('RACK');
+    expect(tk2Next.rackLoadings).toBeCloseTo(-200, 6);
+    expect(tk2Next.status).toBe('RACK');
   });
 
   it('does not cascade when the primary tank has enough room above the floor', () => {
