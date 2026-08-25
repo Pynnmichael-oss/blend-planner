@@ -27,6 +27,10 @@ const STATUS_BADGE = {
   OVERFILL:   { bg: 'rgba(192,136,46,.18)',  color: '#8a5e12' },
   LOW:        { bg: 'rgba(0,79,113,.10)',    color: '#004F71' },
   'RACK+RCV': { bg: 'rgba(0,179,152,.14)',   color: '#0a7e62' },
+  // Same teal/green hue as RACK, but outlined instead of solid-filled —
+  // reads as "was racking, just handed off" rather than a second primary
+  // rack tank for the period.
+  'CO-RACK':  { bg: 'transparent', color: '#0a7e62', border: '1.5px solid rgba(10,126,98,.55)' },
 };
 
 const CELL_LEFT_BORDER = {
@@ -103,7 +107,7 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
               <span
                 style={{
                   fontSize: '10px', padding: '3px 8px', borderRadius: '5px', letterSpacing: '0.3px',
-                  backgroundColor: badge.bg, color: badge.color,
+                  backgroundColor: badge.bg, color: badge.color, border: badge.border,
                   fontFamily: "'Montserrat',sans-serif", fontWeight: 800,
                   userSelect: 'none', display: 'inline-block',
                 }}

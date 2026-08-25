@@ -306,6 +306,10 @@ export function buildPlanGrid({
         // be pumped and a warning is logged — an edge case not yet covered
         // by Kelly's spec (all tanks floor-limited simultaneously).
         const rackDraws = {}; // tankId → accumulated rack lift this period (negative = outbound)
+        // Tanks that hit MIN_PUMPABLE and handed off to another tank THIS
+        // period — flagged CO-RACK for this period only, never carried
+        // forward (rebuilt fresh every product/period iteration).
+        const coRackTransitionTanks = new Set();
 
         const cascadeTankAvailable = (tankId) => {
           const t = product.tanks.find(x => x.id === tankId);
@@ -343,7 +347,9 @@ export function buildPlanGrid({
           let remaining   = demand; // negative
           let tankId      = startTankId;
           let finalTankId = startTankId;
+          const visited   = [];
           while (remaining < 0 && tankId) {
+            visited.push(tankId);
             const headroom = Math.max(cascadeTankAvailable(tankId) - MIN_PUMPABLE, 0);
             const applied  = Math.min(Math.abs(remaining), headroom);
             if (applied > 0) {
@@ -361,6 +367,12 @@ export function buildPlanGrid({
                 break;
               }
             }
+          }
+          // Every tank in the chain except the one it finally lands on hit
+          // its floor and handed off — CO-RACK for this period only. The
+          // final tank keeps the normal RACK role (isPrimary/isHandoff).
+          for (const id of visited) {
+            if (id !== finalTankId) coRackTransitionTanks.add(id);
           }
           return finalTankId;
         };
@@ -419,6 +431,9 @@ export function buildPlanGrid({
           const isPrimary    = tank.id === primaryFinalTankId && totalLifting !== 0;
           const isHandoff    = tank.id === handoffFinalTankId && handoffRackId !== null;
           const isRackTank   = isPrimary || isHandoff;
+          // True only on the exact period this tank hit MIN_PUMPABLE and
+          // handed off — never carried forward to later periods.
+          const isCoRackTransition = coRackTransitionTanks.has(tank.id);
 
           const receiptVolume  = tankReceipts.reduce((s, r) => s + r.volume, 0);
           const isManualIdle   = manual.idle ?? false;
@@ -487,10 +502,11 @@ export function buildPlanGrid({
           else {
             const onRack    = isRackTank && totalLifting !== 0;
             const onReceipt = cappedReceipts > 0;
-            if      (onRack && onReceipt) status = "RACK+RCV";
-            else if (onRack)              status = "RACK";
-            else if (onReceipt)           status = "RECEIPT";
-            else                          status = "IDLE";
+            if      (onRack && onReceipt)  status = "RACK+RCV";
+            else if (onRack)               status = "RACK";
+            else if (isCoRackTransition)   status = "CO-RACK";
+            else if (onReceipt)            status = "RECEIPT";
+            else                           status = "IDLE";
           }
 
           // Detect blend-end: previous period was blending, this one is not
@@ -572,6 +588,7 @@ export function buildPlanGrid({
             transferInVol,
             spillVolume,
             spillWarning: spillVolume > 0,
+            coRackTransition: isCoRackTransition,
             belowHeel: false,
             heel: tank.heel,
             safeFill: tank.safeFill,

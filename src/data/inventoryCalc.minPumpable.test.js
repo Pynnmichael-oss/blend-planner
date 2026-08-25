@@ -51,18 +51,20 @@ describe('MIN_PUMPABLE floor — same-period cascade', () => {
     const tk1 = find(grid, 'TK1');
     const tk2 = find(grid, 'TK2');
 
-    // TK1 draws down to exactly the 500 bbl floor, not below — but it hands
-    // off the rack role the moment it hits the floor, so it does NOT keep
-    // the RACK badge for the split period; it falls through to whatever
-    // status its own (non-rack) activity implies.
+    // TK1 draws down to exactly the 500 bbl floor, not below — it hands off
+    // the rack role the moment it hits the floor, so instead of falling all
+    // the way through to IDLE/RECEIPT it's flagged CO-RACK for this one
+    // period, keeping the partial-rack contribution visible.
     expect(tk1.rackLoadings).toBeCloseTo(-500, 6);
     expect(tk1.closingInventory).toBeCloseTo(500, 6);
-    expect(tk1.status).toBe('IDLE');
+    expect(tk1.coRackTransition).toBe(true);
+    expect(tk1.status).toBe('CO-RACK');
 
     // The remaining 300 bbl of demand cascades to TK2 in the SAME period,
     // and TK2 is the sole tank badged RACK for this period.
     expect(tk2.rackLoadings).toBeCloseTo(-300, 6);
     expect(tk2.closingInventory).toBeCloseTo(4700, 6);
+    expect(tk2.coRackTransition).toBe(false);
     expect(tk2.status).toBe('RACK');
   });
 
@@ -93,13 +95,21 @@ describe('MIN_PUMPABLE floor — same-period cascade', () => {
       rackTankAssignments,
     });
 
-    const tk1Next = find(grid, 'TK1', '06-11');
-    const tk2Next = find(grid, 'TK2', '06-11');
+    const tk1First = find(grid, 'TK1', '00-05');
+    const tk1Next  = find(grid, 'TK1', '06-11');
+    const tk2Next  = find(grid, 'TK2', '06-11');
 
-    // The carry-forward pointer must follow the cascade to TK2 — TK1 is
-    // already at its floor and must not be re-selected as the rack tank.
+    // The floor-hit period itself carries the one-period CO-RACK flag...
+    expect(tk1First.coRackTransition).toBe(true);
+    expect(tk1First.status).toBe('CO-RACK');
+
+    // ...but it must NOT persist: TK1 is untouched next period (no draw,
+    // no flag), and the carry-forward pointer must follow the cascade to
+    // TK2 rather than re-selecting the already-floored TK1.
+    expect(tk1Next.coRackTransition).toBe(false);
     expect(tk1Next.rackLoadings).toBe(0);
     expect(tk1Next.status).not.toBe('RACK');
+    expect(tk1Next.status).not.toBe('CO-RACK');
     expect(tk2Next.rackLoadings).toBeCloseTo(-200, 6);
     expect(tk2Next.status).toBe('RACK');
   });
@@ -167,8 +177,12 @@ describe('MIN_PUMPABLE floor — same-period cascade', () => {
     const tk2 = find(grid, 'TK2');
 
     // TK1 still caps at the floor; TK2 is blending so it can't absorb the
-    // cascade — total rack output is capped, not crashed.
+    // cascade — total rack output is capped, not crashed. TK1 never
+    // successfully hands off to anyone, so it keeps its normal RACK role
+    // rather than being flagged CO-RACK.
     expect(tk1.closingInventory).toBeCloseTo(500, 6);
+    expect(tk1.coRackTransition).toBe(false);
+    expect(tk1.status).toBe('RACK');
     expect(tk2.rackLoadings).toBe(0);
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
@@ -206,9 +220,12 @@ describe('MIN_PUMPABLE floor — same-period cascade', () => {
     const tk1 = find(grid, 'TK1');
 
     // Only 100 bbl of headroom exists above the 500 floor — the rest of the
-    // 800 bbl demand is undeliverable and must not crash or overdraw.
+    // 800 bbl demand is undeliverable and must not crash or overdraw. TK1
+    // is the only tank and never hands off, so it stays RACK, not CO-RACK.
     expect(tk1.closingInventory).toBeCloseTo(500, 6);
     expect(tk1.rackLoadings).toBeCloseTo(-100, 6);
+    expect(tk1.coRackTransition).toBe(false);
+    expect(tk1.status).toBe('RACK');
     expect(warnSpy).toHaveBeenCalledTimes(1);
     warnSpy.mockRestore();
   });
