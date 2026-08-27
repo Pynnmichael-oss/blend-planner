@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 // specCeiling and blendTarget are lifted to useBlendPlanner — received as props
 import { detectBlends } from '../../data/blendPlanSummary';
-import { generateBlendPDF } from '../../data/generateBlendPDF';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+// generateBlendPDF (per-blend PDF export) is no longer called from the
+// "Save Blend PDFs" button below — replaced with a single image-based PDF
+// capture of the on-screen summary via html2canvas. generateBlendPDF.js is
+// left in place, unused, in case we revert.
+// import { generateBlendPDF } from '../../data/generateBlendPDF';
 import { truckCountFor, TRUCK_BBLS } from '../../data/truckCalc';
 import SavePlanButton from '../shared/SavePlanButton';
 
@@ -223,23 +229,44 @@ function BlendCalculator({ blend, terminalConfig, specCeiling, blendTarget }) {
   );
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 export default function BlendPlanSummary({ grid, terminalConfig, startDate, specCeiling, blendTarget }) {
   const blends = detectBlends(grid, terminalConfig);
   const [pdfStatus, setPdfStatus] = useState(null); // null | 'saving' | 'done'
+  const summaryRef = useRef(null);
 
   async function handleSavePDFs() {
-    if (!blends.length || pdfStatus === 'saving') return;
+    if (!blends.length || pdfStatus === 'saving' || !summaryRef.current) return;
     setPdfStatus('saving');
-    for (const blend of blends) {
-      const doc = generateBlendPDF(blend);
-      doc.save(`Blend-${blend.blendNumber}-${blend.tankId}-${blend.startDate}.pdf`);
-      await sleep(300);
+    try {
+      const canvas = await html2canvas(summaryRef.current, {
+        scale: 2, // sharper output
+        backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+
+      const orientation = canvas.width >= canvas.height ? 'landscape' : 'portrait';
+      const doc = new jsPDF({ orientation, unit: 'pt', format: 'letter' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+
+      // Scale the captured image to fit the page width (or height, whichever
+      // constrains first), preserving aspect ratio.
+      const scale = Math.min(pageW / canvas.width, pageH / canvas.height);
+      const imgW = canvas.width * scale;
+      const imgH = canvas.height * scale;
+      const x = (pageW - imgW) / 2;
+      const y = (pageH - imgH) / 2;
+
+      doc.addImage(imgData, 'PNG', x, y, imgW, imgH);
+      doc.save(`FortWorth_BlendPlan_${startDate ?? new Date().toISOString().slice(0, 10)}.pdf`);
+      setPdfStatus('done');
+    } catch (err) {
+      console.error('Save Blend PDFs failed:', err);
+      setPdfStatus(null);
+      return;
     }
-    setPdfStatus('done');
     setTimeout(() => setPdfStatus(null), 3000);
   }
 
@@ -274,6 +301,10 @@ export default function BlendPlanSummary({ grid, terminalConfig, startDate, spec
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* Captured region for "Save Blend PDFs" — table + calculator cards only.
+          Buttons (below) are intentionally rendered outside this ref. */}
+      <div ref={summaryRef} style={{ display: 'flex', flexDirection: 'column', gap: '20px', backgroundColor: C.bg }}>
 
       {/* Section A — summary table */}
       <div>
@@ -330,27 +361,6 @@ export default function BlendPlanSummary({ grid, terminalConfig, startDate, spec
             </tbody>
           </table>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '12px' }}>
-          <button
-            onClick={handleSavePDFs}
-            disabled={pdfStatus === 'saving'}
-            style={{
-              padding: '6px 16px', fontSize: '12px', fontWeight: 'bold',
-              backgroundColor: C.amber, color: '#000',
-              border: 'none', borderRadius: '4px',
-              cursor: pdfStatus === 'saving' ? 'not-allowed' : 'pointer',
-              opacity: pdfStatus === 'saving' ? 0.5 : 1,
-            }}
-          >
-            {pdfStatus === 'saving' ? 'Saving PDFs…' : 'Save Blend PDFs'}
-          </button>
-          {pdfStatus === 'done' && (
-            <span style={{ fontSize: '11px', color: C.green, fontWeight: 'bold' }}>
-              ✓ Saved {blends.length} PDF{blends.length !== 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
       </div>
 
       {/* Section B — butane calculators */}
@@ -369,6 +379,30 @@ export default function BlendPlanSummary({ grid, terminalConfig, startDate, spec
             />
           ))}
         </div>
+      </div>
+
+      </div>
+      {/* end captured region */}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <button
+          onClick={handleSavePDFs}
+          disabled={pdfStatus === 'saving'}
+          style={{
+            padding: '6px 16px', fontSize: '12px', fontWeight: 'bold',
+            backgroundColor: C.amber, color: '#000',
+            border: 'none', borderRadius: '4px',
+            cursor: pdfStatus === 'saving' ? 'not-allowed' : 'pointer',
+            opacity: pdfStatus === 'saving' ? 0.5 : 1,
+          }}
+        >
+          {pdfStatus === 'saving' ? 'Saving PDF…' : 'Save Blend PDFs'}
+        </button>
+        {pdfStatus === 'done' && (
+          <span style={{ fontSize: '11px', color: C.green, fontWeight: 'bold' }}>
+            ✓ Saved PDF
+          </span>
+        )}
       </div>
 
       {/* Section C — save to history */}
