@@ -103,11 +103,11 @@ export async function savePlanToSupabase({ terminalConfig, blends, startDate, bl
     savedAt,
   }));
 
-  const { error } = await supabase.from('blend_plans').insert(rows);
+  const { data, error } = await supabase.rpc('insert_blend_plans_bulk', { p_rows: rows });
   if (error) {
     console.error('[savePlanToSupabase] insert failed:', error);
     return { success: false, error: error.message || 'Unknown Supabase error' };
   }
 
-  return { success: true, rowsAdded: rows.length, rowsUpdated: 0 };
+  return { success: true, rowsAdded: data?.length ?? rows.length, rowsUpdated: 0 };
 }
