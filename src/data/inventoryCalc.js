@@ -13,7 +13,11 @@ export const TIME_SLOTS = ["00-05", "06-11", "12-17", "18-23"];
 const BUTANE_RVP = 52;
 
 // TODO: Kelly — confirm floor applies to rack draw only, not all outflow.
-const MIN_PUMPABLE = 500;
+// Also reused as the receipt-side "don't fill within N bbl of safeFill"
+// buffer in the receipt-assignment fallback cascade below — same magic
+// number, same 500 bbl convention, just applied at the opposite end of
+// the tank (headroom below safeFill instead of floor above heel).
+export const MIN_PUMPABLE = 500;
 
 const SLOT_ORDER = { "00-05": 0, "06-11": 1, "12-17": 2, "18-23": 3 };
 
@@ -94,6 +98,66 @@ export function buildPlanGrid({
         // ── Receipt assignment for this product/period ─────────────────
         // TODO: default allocation — refine per Kelly
         const receiptAssignment = {}; // tankId → [{ volume, rvp, batchCode }]
+
+        // Space a tank actually has left this period before it's assigned
+        // any more receipt volume: safeFill-derived pumpableMax, less the
+        // MIN_PUMPABLE buffer, less whatever's already there (opening +
+        // anything already pushed into receiptAssignment this period).
+        // Approximation: ignores this period's own rack draw (which would
+        // free up more room) — same tradeoff as cascadeTankAvailable below,
+        // and receipts are assigned before rack in this loop anyway.
+        const tankAvailSpace = (tankId) => {
+          const t = product.tanks.find(x => x.id === tankId);
+          if (!t) return 0;
+          const tOpening = lastPeriod[t.id]?.closingInventory ?? openingMap[t.id]?.pumpable ?? 0;
+          const pumpableMax = t.safeFill - t.heel;
+          const alreadyAssigned = (receiptAssignment[t.id] ?? []).reduce((s, r) => s + r.volume, 0);
+          return Math.max((pumpableMax - MIN_PUMPABLE) - (tOpening + alreadyAssigned), 0);
+        };
+
+        // Highest-availSpace eligible tank for the next slice of a
+        // fallback-assigned receipt, excluding tanks already visited in
+        // this cascade and (normally) the current rack tank.
+        const pickReceiptCascadeTank = (excludeSet) => {
+          const pool = product.tanks.filter(t =>
+            !excludeSet.has(t.id) &&
+            !manualInputs[`${t.id}-${date}-${timeSlot}`]?.blendActive &&
+            !manualInputs[`${t.id}-${date}-${timeSlot}`]?.idle &&
+            tankAvailSpace(t.id) > 0
+          );
+          if (!pool.length) return null;
+          return pool.reduce((bestId, t) =>
+            tankAvailSpace(t.id) > tankAvailSpace(bestId) ? t.id : bestId, pool[0].id);
+        };
+
+        // Assigns `volume` starting at startTankId, capped to that tank's
+        // availSpace. Any remainder co-receipts onto the next-highest-space
+        // eligible non-rack, non-blending/idle tank, cascading further if
+        // that one also fills up — mirrors the MIN_PUMPABLE floor cascade
+        // used for rack draws further down (applyRackDemand/pickCascadeTank).
+        // If every candidate is out of room, the tank we're stuck on takes
+        // the overflow — a true edge case Kelly should see as OVERFILL,
+        // not silently suppressed.
+        const assignReceiptWithCascade = (startTankId, volume, rvp, batchCode, excludeSet) => {
+          let remaining = volume;
+          let tankId = startTankId;
+          const visited = new Set();
+          while (remaining > 0.0001 && tankId) {
+            visited.add(tankId);
+            const applied = Math.min(remaining, tankAvailSpace(tankId));
+            if (applied > 0) {
+              (receiptAssignment[tankId] ??= []).push({ volume: applied, rvp, batchCode });
+              remaining -= applied;
+            }
+            if (remaining <= 0.0001) break;
+            const next = pickReceiptCascadeTank(new Set([...excludeSet, ...visited]));
+            if (!next) {
+              (receiptAssignment[tankId] ??= []).push({ volume: remaining, rvp, batchCode });
+              break;
+            }
+            tankId = next;
+          }
+        };
 
         for (const receipt of receipts.filter(r => r.product === productKey)) {
           const slices = distributeReceipts([receipt], date, timeSlot);
@@ -216,9 +280,17 @@ export function buildPlanGrid({
               // If nonRackPool is empty, fall through — rack tank receives as last resort (RACK+RCV status)
             }
 
-            if (receiptTankId) batchReceiptTank[receipt.batchCode] = receiptTankId;
-            if (receiptTankId) currentReceiptTank[productKey] = receiptTankId;
-            if (receiptTankId) (receiptAssignment[receiptTankId] ??= []).push({ volume: sliceVol, rvp, batchCode });
+            if (receiptTankId) {
+              batchReceiptTank[receipt.batchCode] = receiptTankId;
+              currentReceiptTank[productKey] = receiptTankId;
+              // Fallback assignment: cap to availSpace, co-receipt/cascade
+              // the remainder rather than pushing the full volume in blind
+              // and letting it silently exceed pumpableMax.
+              assignReceiptWithCascade(
+                receiptTankId, sliceVol, rvp, batchCode,
+                new Set(rackTankForProduct ? [rackTankForProduct] : [])
+              );
+            }
           }
         }
 

@@ -3,6 +3,7 @@
  */
 import VerticalTankGauge from './InventoryBar';
 import { TRUCK_BBLS } from '../../data/truckCalc';
+import { MIN_PUMPABLE } from '../../data/inventoryCalc';
 
 const C = {
   bg:          '#EEF3F6',
@@ -89,6 +90,11 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
         // always just closing - opening, so it matches whatever actually
         // happened this period without reconstructing it from separate fields.
         const netChange = entry.closingInventory - entry.openingInventory;
+        // Mirrors the MIN_PUMPABLE buffer the receipt-assignment fallback
+        // cascade in inventoryCalc.js actually respects, so operators can
+        // predict a co-receipt/cascade before it happens.
+        const pumpableMax = entry.safeFill - entry.heel;
+        const availSpace  = Math.max((pumpableMax - MIN_PUMPABLE) - entry.openingInventory, 0);
 
         return (
           <td
@@ -166,6 +172,9 @@ export default function TankRow({ tank, periods, cells, openingFillPct, toggleBl
             {/* Opening inventory (primary) + net change (secondary) */}
             <div className="font-mono" style={{ fontSize: '12px', fontWeight: 600, color: invColor, lineHeight: 1.3 }}>
               {Math.round(entry.openingInventory).toLocaleString()} bbl
+            </div>
+            <div className="font-mono" style={{ fontSize: '10px', fontWeight: 600, color: C.muted, lineHeight: 1.3 }}>
+              avail {Math.round(availSpace).toLocaleString()} bbl
             </div>
             <div className="font-mono" style={{
               fontSize: '12px', fontWeight: 600, lineHeight: 1.3,
